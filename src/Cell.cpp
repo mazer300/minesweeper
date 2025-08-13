@@ -2,7 +2,7 @@
 
 
 Cell::Cell(unsigned int const row, unsigned int const col) : row(row), col(col), state(0), mine(false), flag(false),
-                                                       is_open(false) {
+                                                             is_open(false) {
 }
 
 int Cell::getState() { return state; }

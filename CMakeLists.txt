@@ -3,19 +3,23 @@ project(minesweeper)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(minesweeper main.cpp
-        Cell.h
-        Cell.cpp
-        Field.cpp
-        Field.h
-        Game.cpp
-        Game.h
-        QTInputHandler.cpp
-        QTInputHandler.h
-        QTRenderer.h
-        GameLoop.h
-        GameController.cpp
-        GameController.h
-        GameRenderer.cpp
-        GameRenderer.h
-        QTRenderer.cpp)
+file(GLOB SOURCES "src/*.cpp" "src/*.h")
+
+add_executable(minesweeper
+        src/main.cpp
+        src/Cell.h
+        src/Cell.cpp
+        src/Field.cpp
+        src/Field.h
+        src/Game.cpp
+        src/Game.h
+        src/QTInputHandler.cpp
+        src/QTInputHandler.h
+        src/QTRenderer.h
+        src/GameLoop.h
+        src/GameController.cpp
+        src/GameController.h
+        src/GameRenderer.cpp
+        src/GameRenderer.h
+        src/QTRenderer.cpp)
+
