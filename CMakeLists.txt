@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.10)
 project(minesweeper)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -13,13 +13,6 @@ add_executable(minesweeper
         src/Field.h
         src/Game.cpp
         src/Game.h
-        src/QTInputHandler.cpp
-        src/QTInputHandler.h
-        src/QTRenderer.h
         src/GameLoop.h
-        src/GameController.cpp
-        src/GameController.h
-        src/GameRenderer.cpp
-        src/GameRenderer.h
-        src/QTRenderer.cpp)
+        )
 

@@ -27,6 +27,7 @@ public:
     unsigned int getRows();
     unsigned int getCols();
     Cell& getCell(int row, int col);
+    unsigned int getMines();
 
 private:
     bool state_of_game;

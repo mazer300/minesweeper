@@ -20,6 +20,7 @@ void Game::gameLoop() {
             field.print();
             break;
         }
+        std::cout<<getMines()<<'\n';
         field.print();
 
         std::cout << "Enter your choose\nAttack - 1\nPut flag - 2\n";
@@ -29,10 +30,10 @@ void Game::gameLoop() {
         std::cin >> x >> y;
         switch (value) {
             case 1:
-                field.attack(x,y);
+                attack(x,y);
                 break;
             case 2:
-                field.putFlag(x, y);
+                putFlag(x, y);
                 break;
         }
     }
@@ -56,3 +57,4 @@ StateGame Game::getState() {
 unsigned int Game::getRows(){ return field.getRows(); }
 unsigned int Game::getCols(){ return field.getCols(); }
 Cell& Game::getCell(int row, int col) { return field.getCell(row, col); }
+unsigned int Game::getMines(){ return field.getMines(); }

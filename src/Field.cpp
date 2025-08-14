@@ -130,3 +130,6 @@ void Field::print() {
 unsigned int Field::getRows(){ return number_of_rows; }
 unsigned int Field::getCols(){ return number_of_columns; }
 Cell& Field::getCell(int row, int col){ return cells[row][col]; }
+unsigned int Field::getMines(){
+    
+}

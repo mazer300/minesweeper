@@ -1,10 +1,11 @@
 #include "GameLoop.h"
 #include "Game.h"
+#include "CLI.h"
 
 
 int main() {
-    Game game(9,9,2);
-    GameLoop gameLoop(game);
+    CLI cli;
+    GameLoop<CLI> gameLoop(cli);
     gameLoop.run();
     return 0;
 }

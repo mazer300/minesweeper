@@ -24,6 +24,7 @@ public:
     unsigned int getRows();
     unsigned int getCols();
     Cell& getCell(int row, int col);
+    unsigned int getMines();
 
 private:
     unsigned int number_of_rows;
