@@ -1,5 +1,4 @@
 #include "Game.h"
-#include <iostream>
 
 Game::Game(unsigned int const number_of_rows, unsigned int const number_of_columns,
            unsigned int const number_of_mines) : number_of_rows(number_of_rows),
@@ -7,38 +6,6 @@ Game::Game(unsigned int const number_of_rows, unsigned int const number_of_colum
                                                  number_of_mines(number_of_mines),
                                                  field(Field(number_of_rows, number_of_columns, number_of_mines)) {
 }
-
-void Game::gameLoop() {
-    while (true) {
-        if (field.isWin()) {
-            std::cout << "WIN!!!\n";
-            field.print();
-            break;
-        }
-        if (field.getState() == false) {
-            std::cout << "Game Over!\n";
-            field.print();
-            break;
-        }
-        std::cout<<getMines()<<'\n';
-        field.print();
-
-        std::cout << "Enter your choose\nAttack - 1\nPut flag - 2\n";
-        int value, x, y;
-        std::cin >> value;
-        std::cout << "(x,y):";
-        std::cin >> x >> y;
-        switch (value) {
-            case 1:
-                attack(x,y);
-                break;
-            case 2:
-                putFlag(x, y);
-                break;
-        }
-    }
-}
-
 
 void Game::attack(unsigned int const x, unsigned int const y) {
     field.attack(x, y);
@@ -54,7 +21,16 @@ StateGame Game::getState() {
     return StateGame::Lose;
 }
 
-unsigned int Game::getRows(){ return field.getRows(); }
-unsigned int Game::getCols(){ return field.getCols(); }
-Cell& Game::getCell(int row, int col) { return field.getCell(row, col); }
-unsigned int Game::getMines(){ return field.getMines(); }
+unsigned int Game::getRows() { return field.getRows(); }
+unsigned int Game::getCols() { return field.getCols(); }
+Cell &Game::getCell(int row, int col) { return field.getCell(row, col); }
+unsigned int Game::getMines() { return field.getMines(); }
+unsigned int Game::getNumberOfMines() { return field.getNumberOfMines(); }
+
+Field Game::getField() {
+    return field;
+}
+
+Cell &Game::getCell(unsigned int row, unsigned int col) {
+    return field.getCell(row, col);
+}

@@ -17,7 +17,7 @@ void Cell::setOpen(bool const is_open) { this->is_open = is_open; }
 bool Cell::isFlag() { return flag; }
 void Cell::setFlag(bool const flag) { this->flag = flag; }
 
-std::string Cell::print() {
+std::string Cell::to_str() {
     if (!is_open) {
         return "[ ]";
     }

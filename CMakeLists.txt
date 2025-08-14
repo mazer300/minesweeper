@@ -14,5 +14,7 @@ add_executable(minesweeper
         src/Game.cpp
         src/Game.h
         src/GameLoop.h
-        )
+        src/CLI.cpp
+        src/CLI.h
+)
 

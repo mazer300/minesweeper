@@ -4,7 +4,7 @@
 
 Field::Field(unsigned int const number_rows, unsigned int const number_columns,
              unsigned int const number_mines) : number_of_rows(number_rows), number_of_columns(number_columns),
-                                                number_of_mines(number_mines), state_of_game(true) {
+                                                number_of_mines(number_mines), state_of_game(true), count_flags(0) {
     // Создание поля
     for (size_t i = 0; i < number_of_rows; i++) {
         std::vector<Cell> tmp;
@@ -30,8 +30,8 @@ Field::Field(unsigned int const number_rows, unsigned int const number_columns,
     for (long int i = 0; i < number_of_rows; i++) {
         for (long int j = 0; j < number_of_columns; j++) {
             int count = 0;
-            for (int z = -1; z < 2; z++) {
-                for (int w = -1; w < 2; w++) {
+            for (int z = -1; z <= 1; z++) {
+                for (int w = -1; w <= 1; w++) {
                     long int const coord_x = i - z;
                     long int const coord_y = j - w;
                     if (coord_x == -1 || coord_y == -1 || coord_x == number_of_rows || coord_y ==
@@ -53,13 +53,41 @@ void Field::putFlag(unsigned int const row, unsigned int const col) {
     if (!cells[row][col].isFlag()) {
         cells[row][col].setFlag(true);
         cells[row][col].setOpen(true);
+        count_flags++;
     } else {
         cells[row][col].setOpen(false);
         cells[row][col].setFlag(false);
+        count_flags--;
     }
 }
 
 void Field::attack(unsigned int const row, unsigned int const col) {
+    if (cells[row][col].isOpen()) {
+        int count = 0;
+        for (int z = -1; z <= 1; z++) {
+            for (int w = -1; w <= 1; w++) {
+                long int const coord_x = row + z;
+                long int const coord_y = col + w;
+                if (coord_x >= 0 && coord_x < number_of_rows && coord_y >= 0 && coord_y < number_of_columns && cells[
+                        coord_x][coord_y].isFlag()) {
+                    count++;
+                }
+            }
+        }
+        if (count == cells[row][col].getState()) {
+            for (int z = -1; z <= 1; z++) {
+                for (int w = -1; w <= 1; w++) {
+                    long int const coord_x = row + z;
+                    long int const coord_y = col + w;
+                    if (coord_x >= 0 && coord_x < number_of_rows && coord_y >= 0 && coord_y < number_of_columns && !
+                        cells[coord_x][coord_y].isOpen()) {
+                        attack(row + z, col + w);
+                    }
+                }
+            }
+        }
+    }
+
     if (!(cells[row][col].isMine() <= cells[row][col].isFlag())) {
         state_of_game = false;
         openMines();
@@ -88,8 +116,8 @@ void Field::openMoreCells(unsigned int const row, unsigned int const col) {
     }
     cells[row][col].setOpen(true);
     if (cells[row][col].getState() == 0) {
-        for (int i = -1; i < 2; i++) {
-            for (int j = -1; j < 2; j++) {
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
                 openMoreCells(row + i, col + j);
             }
         }
@@ -118,18 +146,12 @@ bool Field::isWin() {
     return false;
 }
 
-void Field::print() {
-    for (size_t i = 0; i < number_of_rows; i++) {
-        for (size_t j = 0; j < number_of_columns; j++) {
-            std::cout << cells[i][j].print() << " ";
-        }
-        std::cout << '\n';
-    }
+unsigned int Field::getRows() { return number_of_rows; }
+unsigned int Field::getCols() { return number_of_columns; }
+Cell &Field::getCell(int row, int col) { return cells[row][col]; }
+
+long int Field::getMines() {
+    return (long int) number_of_mines - (long int) count_flags;
 }
 
-unsigned int Field::getRows(){ return number_of_rows; }
-unsigned int Field::getCols(){ return number_of_columns; }
-Cell& Field::getCell(int row, int col){ return cells[row][col]; }
-unsigned int Field::getMines(){
-    
-}
+unsigned int Field::getNumberOfMines() { return number_of_mines; }

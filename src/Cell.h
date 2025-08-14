@@ -23,7 +23,7 @@ public:
 
     void setFlag(bool flag);
 
-    std::string print();
+    std::string to_str();
 
 private:
     unsigned int row;

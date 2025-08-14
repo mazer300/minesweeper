@@ -6,11 +6,27 @@
 #include <functional>
 #include "GameLoop.h"
 
-class CLI{
+class CLI {
+public:
+    CLI();
+
+    explicit CLI(Game *game);
+
+
     void print(std::string message);
+
+    void printField();
+
     Command getCommand();
-    std::tuple<int,int> getCoords();
-    void getGame(unsigned int& number_of_rows, unsigned int& number_of_cols, unsigned int& number_of_mines);
+
+    std::tuple<int, int> getCoords();
+
+    void getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_cols, unsigned int &number_of_mines);
+
+    void setGame(Game *game);
+
+private:
+    Game *game;
 };
 
 #endif //GAME_H

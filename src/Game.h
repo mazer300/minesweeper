@@ -13,8 +13,6 @@ class Game {
 public:
     Game(unsigned int number_of_rows, unsigned int number_of_columns, unsigned int number_of_mines);
 
-    void gameLoop();
-
     void attack(unsigned int x, unsigned int y);
 
     void putFlag(unsigned int x, unsigned int y);
@@ -22,9 +20,18 @@ public:
     StateGame getState();
 
     unsigned int getRows();
+
     unsigned int getCols();
-    Cell& getCell(int row, int col);
+
+    Cell &getCell(int row, int col);
+
     unsigned int getMines();
+
+    Field getField();
+
+    Cell &getCell(unsigned int row, unsigned int col);
+
+    unsigned int getNumberOfMines();
 
 private:
     unsigned int number_of_rows;
