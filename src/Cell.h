@@ -7,23 +7,23 @@ class Cell {
 public:
     Cell(unsigned int row, unsigned int col);
 
-    int getState();
+    [[nodiscard]] int getState() const ;
 
     void setState(int state);
 
-    bool isMine();
+    [[nodiscard]] bool isMine() const;
 
     void setMine(bool mine);
 
-    bool isOpen();
+    [[nodiscard]] bool isOpen() const;
 
     void setOpen(bool is_open);
 
-    bool isFlag();
+    [[nodiscard]] bool isFlag() const;
 
     void setFlag(bool flag);
 
-    std::string to_str();
+    [[nodiscard]] std::string to_str() const;
 
 private:
     unsigned int row;

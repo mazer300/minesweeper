@@ -7,7 +7,7 @@ CLI::CLI(Game *game) : game(game) {
 }
 
 
-void CLI::print(std::string message) {
+void CLI::print(std::string message){
     std::cout << message;
 }
 
@@ -78,7 +78,7 @@ std::tuple<int, int> CLI::getCoords() {
     while (1) {
         std::cout << "Введите координаты (x y): ";
         std::cin >> x >> y;
-        if (x >= 1 && y >= 1) {
+        if (x >= 1 && y >= 1 && x <= game->getCols() && y <= game->getRows()) {
             return std::make_tuple(y - 1, x - 1);
         } else {
             std::cout << "Неверное значение, попробуйте снова\n";

@@ -23,15 +23,13 @@ public:
 
     unsigned int getCols();
 
-    Cell &getCell(int row, int col);
-
     unsigned int getMines();
 
     Field getField();
 
-    Cell &getCell(unsigned int row, unsigned int col);
-
     unsigned int getNumberOfMines();
+
+    Cell &getCell(unsigned int row, unsigned int col);
 
 private:
     unsigned int number_of_rows;

@@ -21,16 +21,9 @@ StateGame Game::getState() {
     return StateGame::Lose;
 }
 
-unsigned int Game::getRows() { return field.getRows(); }
+unsigned int Game::getRows()  { return field.getRows(); }
 unsigned int Game::getCols() { return field.getCols(); }
-Cell &Game::getCell(int row, int col) { return field.getCell(row, col); }
 unsigned int Game::getMines() { return field.getMines(); }
+Field Game::getField() { return field; }
 unsigned int Game::getNumberOfMines() { return field.getNumberOfMines(); }
-
-Field Game::getField() {
-    return field;
-}
-
-Cell &Game::getCell(unsigned int row, unsigned int col) {
-    return field.getCell(row, col);
-}
+Cell &Game::getCell(unsigned int const row, unsigned int const col) { return field.getCell(row, col); }

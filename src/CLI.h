@@ -12,7 +12,6 @@ public:
 
     explicit CLI(Game *game);
 
-
     void print(std::string message);
 
     void printField();

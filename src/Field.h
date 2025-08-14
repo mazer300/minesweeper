@@ -9,32 +9,33 @@ class Field {
 public:
     Field(unsigned int number_rows, unsigned int number_columns, unsigned int number_mines);
 
-
     void putFlag(unsigned int row, unsigned int col);
 
     void attack(unsigned int row, unsigned int col);
 
-    void openMines();
-
-    void openMoreCells(unsigned int row, unsigned int col);
-
-    bool getState();
-
     bool isWin();
 
-    void print();
+    bool getState();
 
     unsigned int getRows();
 
     unsigned int getCols();
 
-    Cell &getCell(int row, int col);
+    Cell &getCell(unsigned int row, unsigned int col);
 
     long int getMines();
 
     unsigned int getNumberOfMines();
 
 private:
+    bool isValidCoord(long int row, long int col);
+
+    void roundAttack(unsigned int row, unsigned int col);
+
+    void openMines();
+
+    void openMoreCells(unsigned int row, unsigned int col);
+
     bool state_of_game;
     unsigned int number_of_rows;
     unsigned int number_of_columns;

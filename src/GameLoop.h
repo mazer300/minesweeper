@@ -20,10 +20,10 @@ public:
     }
 
     void run() {
-        while (1) {
+        while (true) {
             menu();
             if (flag) {
-                interface.print("Досвидания\n");
+                interface.print("До свидания\n");
                 return;
             }
             gameLoop();
