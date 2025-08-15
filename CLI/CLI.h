@@ -1,10 +1,9 @@
 #ifndef CLI_H
 #define CLI_H
 
-#include <iostream>
 #include <string>
-#include <functional>
-#include "GameLoop.h"
+#include "../include/GameLoop.h"
+#include <unordered_map>
 
 class CLI {
 public:
@@ -12,13 +11,15 @@ public:
 
     explicit CLI(Game *game);
 
+    void clearScreen();
+
     void print(std::string message);
 
     void printField();
 
     Command getCommand();
 
-    std::tuple<int, int> getCoords();
+    std::tuple<int, int> getCoords() const;
 
     void getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_cols, unsigned int &number_of_mines);
 
@@ -26,6 +27,7 @@ public:
 
 private:
     Game *game;
+    std::unordered_map<int, Command> command_map;
 };
 
 #endif //GAME_H

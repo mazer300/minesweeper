@@ -1,9 +1,7 @@
-#include "GameLoop.h"
-#include "CLI.h"
-#include <windows.h>
+#include "../include/GameLoop.h"
+#include "../CLI/CLI.h"
 
 int main() {
-    SetConsoleOutputCP(CP_UTF8);
     CLI cli;
     GameLoop<CLI> gameLoop(cli);
     gameLoop.run();

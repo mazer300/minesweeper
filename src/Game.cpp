@@ -1,4 +1,4 @@
-#include "Game.h"
+#include "../include/Game.h"
 
 Game::Game(unsigned int const number_of_rows, unsigned int const number_of_columns,
            unsigned int const number_of_mines) : number_of_rows(number_of_rows),

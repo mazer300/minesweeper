@@ -23,8 +23,6 @@ public:
 
     void setFlag(bool flag);
 
-    [[nodiscard]] std::string to_str() const;
-
 private:
     unsigned int row;
     unsigned int col;
