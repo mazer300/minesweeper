@@ -3,6 +3,7 @@
 
 #include <string>
 #include "../include/GameLoop.h"
+#include <unordered_map>
 
 class CLI {
 public:
@@ -18,7 +19,7 @@ public:
 
     Command getCommand();
 
-    std::tuple<int, int> getCoords();
+    std::tuple<int, int> getCoords() const;
 
     void getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_cols, unsigned int &number_of_mines);
 
@@ -26,6 +27,7 @@ public:
 
 private:
     Game *game;
+    std::unordered_map<int, Command> command_map;
 };
 
 #endif //GAME_H

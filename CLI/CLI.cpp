@@ -2,6 +2,7 @@
 #include <iostream>
 #ifdef _WIN32
 #include <windows.h>
+#include <limits>
 #else
 #include <cstdlib>
 #endif
@@ -13,6 +14,10 @@ CLI::CLI() : game(nullptr) {
 #else
     setlocale(LC_ALL, "en_US.UTF-8");  // Для Linux
 #endif
+    command_map[1] = Command::Attack;
+    command_map[2] = Command::PutFlag;
+    command_map[5] = Command::Exit;
+    command_map[6] = Command::Restart;
 }
 
 CLI::CLI(Game *game) : game(game) {
@@ -34,7 +39,9 @@ void CLI::clearScreen() {
 
 void CLI::printField() {
     clearScreen();
-    std::cout<<"Мины: "<< game->getMines() <<'\n';
+    std::cout << "Мины: " << game->getMines() << '\n';
+
+    // Вывод номеров столбцов
     for (unsigned int i = 0; i < game->getCols() + 1; i++) {
         if (i < 10) {
             std::cout << " " << i << " ";
@@ -44,6 +51,8 @@ void CLI::printField() {
             std::cout << i;
         }
     }
+
+    // Вывод поля
     std::cout << '\n';
     for (unsigned int i = 0; i < game->getRows(); i++) {
         if (i + 1 < 10) {
@@ -76,31 +85,33 @@ void CLI::printField() {
 
 Command CLI::getCommand() {
     int command;
-    while (1) {
+    while (true) {
         std::cout << "Введите команду 1 - атака, 2 - поставить флаг, 5 - выход, 6 - начать сначала:";
-        std::cin >> command;
-        switch (command) {
-            case 1:
-                return Command::Attack;
-
-            case 2:
-                return Command::PutFlag;
-            case 5:
-                return Command::Exit;
-            case 6:
-                return Command::Restart;
-            default:
-                std::cout << "Неверное значение, попробуйте снова\n";
-                break;
+        if (!(std::cin >> command)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Ошибка! Введите число.\n";
+            continue;
+        }
+        //std::cin >> command;
+        if (command_map.find(command) != command_map.end()) {
+            return command_map[command];
+        } else {
+            std::cout << "Неверное значение, попробуйте снова\n";
         }
     }
 }
 
-std::tuple<int, int> CLI::getCoords() {
+std::tuple<int, int> CLI::getCoords() const {
     long int x, y;
-    while (1) {
+    while (true) {
         std::cout << "Введите координаты (x y): ";
-        std::cin >> x >> y;
+        if (!(std::cin >> x >> y)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Ошибка! Введите два числа.\n";
+            continue;
+        }
         if (x >= 1 && y >= 1 && x <= game->getCols() && y <= game->getRows()) {
             return std::make_tuple(y - 1, x - 1);
         } else {
@@ -111,11 +122,16 @@ std::tuple<int, int> CLI::getCoords() {
 
 void CLI::getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_cols, unsigned int &number_of_mines) {
     int difficulty;
-    while (1) {
+    while (true) {
         clearScreen();
         std::cout <<
                 "Выберете режим сложности\n 1 - Лёгкий(9х9, 10 мин)\n 2 - Средний(16х16, 40 мин)\n 3 - Тяжёлый(30х16, 99 мин)\n 4 - Пользовательский\n 5 - Выход\n";
-        std::cin >> difficulty;
+        if (!(std::cin >> difficulty)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Ошибка! Введите число.\n";
+            continue;
+        }
         switch (difficulty) {
             case 1:
                 number_of_rows = 9;
@@ -137,7 +153,7 @@ void CLI::getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_co
 
             case 4:
                 long int rows, cols, mines;
-                while (1) {
+                while (true) {
                     std::cout << "Введите ширину, высоту, количество мин\n(Ш В К): ";
                     std::cin >> cols >> rows >> mines;
                     if (rows > 0 && cols > 0 && mines > 0) {
