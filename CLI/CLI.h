@@ -1,16 +1,16 @@
 #ifndef CLI_H
 #define CLI_H
 
-#include <iostream>
 #include <string>
-#include <functional>
-#include "GameLoop.h"
+#include "../include/GameLoop.h"
 
 class CLI {
 public:
     CLI();
 
     explicit CLI(Game *game);
+
+    void clearScreen();
 
     void print(std::string message);
 

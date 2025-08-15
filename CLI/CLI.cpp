@@ -1,17 +1,40 @@
 #include "CLI.h"
+#include <iostream>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <cstdlib>
+#endif
 
 CLI::CLI() : game(nullptr) {
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8); // Устанавливаем UTF-8 для вывода
+    SetConsoleCP(CP_UTF8); // Устанавливаем UTF-8 для ввода
+#else
+    setlocale(LC_ALL, "en_US.UTF-8");  // Для Linux
+#endif
 }
 
 CLI::CLI(Game *game) : game(game) {
 }
 
-
-void CLI::print(std::string message){
+void CLI::print(std::string message) {
     std::cout << message;
 }
 
+void CLI::clearScreen() {
+#ifdef _WIN32
+    // Windows-версия
+
+#else
+    // Linux/macOS версия
+    system("clear");
+#endif
+}
+
 void CLI::printField() {
+    clearScreen();
+    std::cout<<"Мины: "<< game->getMines() <<'\n';
     for (unsigned int i = 0; i < game->getCols() + 1; i++) {
         if (i < 10) {
             std::cout << " " << i << " ";
@@ -89,6 +112,7 @@ std::tuple<int, int> CLI::getCoords() {
 void CLI::getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_cols, unsigned int &number_of_mines) {
     int difficulty;
     while (1) {
+        clearScreen();
         std::cout <<
                 "Выберете режим сложности\n 1 - Лёгкий(9х9, 10 мин)\n 2 - Средний(16х16, 40 мин)\n 3 - Тяжёлый(30х16, 99 мин)\n 4 - Пользовательский\n 5 - Выход\n";
         std::cin >> difficulty;

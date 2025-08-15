@@ -2,7 +2,6 @@
 #define GAMELOOP_H
 
 #include "Game.h"
-#include <functional>
 
 
 enum Command {
@@ -62,7 +61,6 @@ private:
                     break;
             }
 
-            interface.print("Мины: " + std::to_string(game.getMines()) + "\n");
             printField();
 
             std::tuple<int, int> coords;
