@@ -15,7 +15,7 @@ enum Command {
 template<typename Interface>
 class GameLoop {
 public:
-    GameLoop(Interface interface) : interface(interface), flag(false), game(0, 0, 0) {
+    GameLoop(Interface& interface) : interface(interface), flag(false), game(0, 0, 0) {
     }
 
     void run() {
@@ -76,7 +76,7 @@ private:
                 case Command::Exit:
                     return;
                 case Command::Restart:
-                    game = Game(game.getRows(), game.getCols(), game.getNumberOfMines());\
+                    game = Game(game.getRows(), game.getCols(), game.getNumberOfMines());
                     break;
 
                 default:
@@ -91,7 +91,7 @@ private:
 
     bool flag;
     Game game;
-    Interface interface;
+    Interface& interface;
 };
 
 
