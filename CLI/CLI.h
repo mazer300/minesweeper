@@ -11,11 +11,11 @@ public:
 
     explicit CLI(Game *game);
 
-    void clearScreen();
-
     void print(std::string message);
 
     void printField();
+
+    void showEndGameDialog(bool win);
 
     Command getCommand();
 
@@ -26,6 +26,7 @@ public:
     void setGame(Game *game);
 
 private:
+    void clearScreen();
     Game *game;
     std::unordered_map<int, Command> command_map;
 };

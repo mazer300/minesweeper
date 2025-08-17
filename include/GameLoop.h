@@ -3,7 +3,6 @@
 
 #include "Game.h"
 
-
 enum Command {
     Attack,
     PutFlag,
@@ -15,7 +14,7 @@ enum Command {
 template<typename Interface>
 class GameLoop {
 public:
-    GameLoop(Interface interface) : interface(interface), flag(false), game(0, 0, 0) {
+    GameLoop(Interface& interface) : interface(interface), flag(false), game(0, 0, 0) {
     }
 
     void run() {
@@ -43,44 +42,47 @@ private:
 
     void gameLoop() {
         while (true) {
-            switch (game.getState()) {
-                case StateGame::Win:
-                    interface.print("WIN!!!\n");
-                    printField();
-                    return;
+            StateGame state = game.getState(); // Сохраняем состояние
 
-                case StateGame::Lose:
-                    interface.print("Game Over!\n");
-                    printField();
-                    return;
+            if (state == StateGame::Win || state == StateGame::Lose) {
+                //interface.print(state == StateGame::Win ? "WIN!!!\n" : "Game Over!\n");
+                interface.showEndGameDialog(state == StateGame::Win);
+                interface.printField();
 
-                case StateGame::Round:
-                    break;
-
-                default:
-                    break;
+                // Обработка выбора после окончания игры
+                switch (interface.getCommand()) {
+                    case Command::Restart:
+                        game = Game(game.getRows(), game.getCols(), game.getNumberOfMines());
+                        interface.setGame(&game);
+                        continue; // Перезапускаем игру
+                    case Command::Exit:
+                        return; // Выход в меню
+                    default:
+                        continue;
+                }
             }
+            else {
+                printField();
 
-            printField();
-
-            std::tuple<int, int> coords;
-            switch (interface.getCommand()) {
-                case Command::Attack:
-                    coords = interface.getCoords();
-                    game.attack(std::get<0>(coords), std::get<1>(coords));
-                    break;
-                case Command::PutFlag:
-                    coords = interface.getCoords();
-                    game.putFlag(std::get<0>(coords), std::get<1>(coords));
-                    break;
-                case Command::Exit:
-                    return;
-                case Command::Restart:
-                    game = Game(game.getRows(), game.getCols(), game.getNumberOfMines());\
-                    break;
-
-                default:
-                    break;
+                std::tuple<int, int> coords;
+                switch (interface.getCommand()) {
+                    case Command::Attack:
+                        coords = interface.getCoords();
+                        game.attack(std::get<0>(coords), std::get<1>(coords));
+                        break;
+                    case Command::PutFlag:
+                        coords = interface.getCoords();
+                        game.putFlag(std::get<0>(coords), std::get<1>(coords));
+                        break;
+                    case Command::Exit:
+                        return;
+                    case Command::Restart:
+                        game = Game(game.getRows(), game.getCols(), game.getNumberOfMines());
+                        interface.setGame(&game);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }
@@ -91,7 +93,7 @@ private:
 
     bool flag;
     Game game;
-    Interface interface;
+    Interface& interface;
 };
 
 
