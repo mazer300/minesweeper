@@ -15,6 +15,8 @@
 #include <QAction>
 #include <QSizePolicy>
 #include <QSpacerItem>
+#include <QTime>
+#include <QTimer>
 
 // Реализация AnimatedButton
 AnimatedButton::AnimatedButton(const QString &text, QWidget *parent)
@@ -142,7 +144,7 @@ MainMenuWidget::MainMenuWidget(QWidget *parent, bool darkTheme)
     easyButton = new AnimatedButton("ЛЁГКИЙ\n\n9×9 клеток\n10 мин", this);
     mediumButton = new AnimatedButton("СРЕДНИЙ\n\n16×16 клеток\n40 мин", this);
     hardButton = new AnimatedButton("ТЯЖЁЛЫЙ\n\n30×16 клеток\n99 мин", this);
-    customButton = new AnimatedButton("ПОЛЬЗОВАТЕЛЬСКИЙ\n\nВыбрать параметры", this);
+    customButton = new AnimatedButton("НАСТРОЙКИ\n\nВыбрать параметры", this);
 
     // Set fixed size for buttons
     easyButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
@@ -317,18 +319,31 @@ void MainMenuWidget::resizeEvent(QResizeEvent *event) {
 
 // Реализация GameWidget
 GameWidget::GameWidget(Game *game, bool darkTheme, QWidget *parent)
-    : QWidget(parent), game(game), darkTheme(darkTheme), gameEnded(false), endGameDialog(nullptr) {
+    : QWidget(parent), game(game), darkTheme(darkTheme), gameEnded(false),
+      endGameDialog(nullptr), elapsedSeconds(0), timerStarted(false) {
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
-    // Top panel with mine counter
+    // Top panel with mine counter and timer
     QHBoxLayout *topLayout = new QHBoxLayout;
+
+    // Mine counter
     mineCounterLabel = new QLabel(QString("Мины: %1").arg((int)game->getMines()));
     mineCounterLabel->setStyleSheet("font-size: 18px; font-weight: bold;");
     topLayout->addWidget(mineCounterLabel, 0, Qt::AlignLeft);
+
+    // Timer label
+    timerLabel = new QLabel("Время: 00:00");
+    timerLabel->setStyleSheet("font-size: 18px; font-weight: bold;");
+    topLayout->addWidget(timerLabel, 0, Qt::AlignCenter);
+
     topLayout->addStretch();
     mainLayout->addLayout(topLayout);
+
+    // Game timer
+    gameTimer = new QTimer(this);
+    connect(gameTimer, &QTimer::timeout, this, &GameWidget::updateTimer);
 
     // Game field grid
     QHBoxLayout *fieldLayout = new QHBoxLayout;
@@ -352,6 +367,10 @@ GameWidget::GameWidget(Game *game, bool darkTheme, QWidget *parent)
                 int row = button->property("row").toInt();
                 int col = button->property("col").toInt();
                 if (!gameEnded) {
+                    // Start timer on first action
+                    if (!timerStarted) {
+                        startTimer();
+                    }
                     emit cellClicked(row, col, Command::Attack);
                 }
             });
@@ -360,6 +379,10 @@ GameWidget::GameWidget(Game *game, bool darkTheme, QWidget *parent)
                 int row = button->property("row").toInt();
                 int col = button->property("col").toInt();
                 if (!gameEnded) {
+                    // Start timer on first action
+                    if (!timerStarted) {
+                        startTimer();
+                    }
                     emit cellClicked(row, col, Command::PutFlag);
                 }
             });
@@ -394,8 +417,15 @@ GameWidget::GameWidget(Game *game, bool darkTheme, QWidget *parent)
 
     mainLayout->addLayout(buttonLayout);
 
-    connect(restartButton, &QPushButton::clicked, this, [this]() { emit restartRequested(); });
-    connect(exitButton, &QPushButton::clicked, this, [this]() { emit exitToMenuRequested(); });
+    connect(restartButton, &QPushButton::clicked, this, [this]() {
+        resetTimer();
+        emit restartRequested();
+    });
+
+    connect(exitButton, &QPushButton::clicked, this, [this]() {
+        stopTimer();
+        emit exitToMenuRequested();
+    });
 
     updateTheme(darkTheme);
     updateGameField();
@@ -405,11 +435,13 @@ GameWidget::~GameWidget() {
     if (endGameDialog) {
         endGameDialog->deleteLater();
     }
+    delete gameTimer;
 }
 
 void GameWidget::setGame(Game* newGame) {
     game = newGame;
     gameEnded = false;
+    resetTimer();
     updateGameField();
     resizeCells();
 }
@@ -425,12 +457,15 @@ void GameWidget::updateTheme(bool darkTheme) {
     if (restartButton) restartButton->updateStyle(darkTheme);
     if (exitButton) exitButton->updateStyle(darkTheme);
 
-    // Обновляем стиль счетчика мин
+    // Обновляем стиль счетчика мин и таймера
+    QString textColor = darkTheme ? "#eee" : "#333";
+    QString style = QString("font-size: 18px; font-weight: bold; color: %1;").arg(textColor);
+
     if (mineCounterLabel) {
-        mineCounterLabel->setStyleSheet(
-            QString("font-size: 18px; font-weight: bold; color: %1;")
-            .arg(darkTheme ? "#eee" : "#333")
-        );
+        mineCounterLabel->setStyleSheet(style);
+    }
+    if (timerLabel) {
+        timerLabel->setStyleSheet(style);
     }
 
     // Обновляем игровое поле
@@ -446,6 +481,35 @@ void GameWidget::updateGameField() {
         }
     }
     updateMineCounter();
+}
+
+void GameWidget::startTimer() {
+    if (!timerStarted) {
+        elapsedSeconds = 0;
+        gameTimer->start(1000); // обновление каждую секунду
+        timerStarted = true;
+        updateTimer(); // немедленное обновление
+    }
+}
+
+void GameWidget::stopTimer() {
+    gameTimer->stop();
+}
+
+void GameWidget::resetTimer() {
+    stopTimer();
+    elapsedSeconds = 0;
+    timerStarted = false;
+    updateTimer();
+}
+
+void GameWidget::updateTimer() {
+    elapsedSeconds++;
+    int minutes = elapsedSeconds / 60;
+    int seconds = elapsedSeconds % 60;
+    timerLabel->setText(QString("Время: %1:%2")
+                       .arg(minutes, 2, 10, QLatin1Char('0'))
+                       .arg(seconds, 2, 10, QLatin1Char('0')));
 }
 
 void GameWidget::updateCell(int row, int col) {
@@ -530,6 +594,7 @@ void GameWidget::resizeCells() {
 }
 
 void GameWidget::showEndGameDialog(bool win) {
+    stopTimer(); // Останавливаем таймер при завершении игры
     gameEnded = true;
     updateGameField(); // Open all cells
 
@@ -539,7 +604,7 @@ void GameWidget::showEndGameDialog(bool win) {
 
     endGameDialog = new QDialog(this);
     endGameDialog->setWindowTitle(win ? "Победа!" : "Поражение");
-    endGameDialog->setFixedSize(300, 150);
+    endGameDialog->setFixedSize(300, 180); // Увеличили высоту для отображения времени
 
     QVBoxLayout *layout = new QVBoxLayout(endGameDialog);
 
@@ -548,11 +613,24 @@ void GameWidget::showEndGameDialog(bool win) {
     gameResultLabel->setStyleSheet("font-size: 18px; font-weight: bold;");
     layout->addWidget(gameResultLabel);
 
+    // Добавляем отображение времени
+    int minutes = elapsedSeconds / 60;
+    int seconds = elapsedSeconds % 60;
+    QLabel *timeResultLabel = new QLabel(
+        QString("Затраченное время: %1:%2")
+            .arg(minutes, 2, 10, QLatin1Char('0'))
+            .arg(seconds, 2, 10, QLatin1Char('0'))
+    );
+    timeResultLabel->setAlignment(Qt::AlignCenter);
+    timeResultLabel->setStyleSheet("font-size: 16px; font-weight: bold;");
+    layout->addWidget(timeResultLabel);
+
     QPushButton *restartBtn = new QPushButton("Новая игра");
     // QPushButton *menuBtn = new QPushButton("Главное меню");
 
     connect(restartBtn, &QPushButton::clicked, [this]() {
         endGameDialog->accept();
+        resetTimer();
         emit restartRequested();
     });
 
