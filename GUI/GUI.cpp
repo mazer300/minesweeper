@@ -90,7 +90,13 @@ void AnimatedButton::leaveEvent(QEvent *event) {
 // Реализация GUI
 GUI::GUI(QWidget *parent) : QMainWindow(parent), game(nullptr),
     easyButton(nullptr), mediumButton(nullptr), hardButton(nullptr),
-    customButton(nullptr), themeButton(nullptr), darkTheme(false) {
+    customButton(nullptr), themeButton(nullptr) {
+
+    // Инициализация настроек
+    settings = new QSettings("Minesweeper", "ThemeSettings", this);
+
+    // Загрузка сохраненной темы
+    loadTheme();
 
     centralWidget = new QWidget(this);
     centralWidget->setMouseTracking(true);
@@ -98,24 +104,28 @@ GUI::GUI(QWidget *parent) : QMainWindow(parent), game(nullptr),
     resize(1000, 800);
 
     // Кнопка переключения темы
-    themeButton = new QPushButton("🌙", centralWidget);
+    themeButton = new QPushButton(darkTheme ? "☀️" : "🌙", centralWidget);
     themeButton->setFixedSize(50, 50);
-    themeButton->setStyleSheet(R"(
-        QPushButton {
-            border: 2px solid #555;
-            border-radius: 25px;
-            font-size: 20px;
-        }
-        QPushButton:hover {
-            background-color: #ddd;
-        }
-    )");
     connect(themeButton, &QPushButton::clicked, this, &GUI::toggleTheme);
+
+    // Применяем текущую тему
+    updateTheme();
 }
 
 GUI::GUI(QWidget *parent, Game *game) : GUI(parent) {
     this->game = game;
 }
+
+GUI::~GUI() {
+    // Сохраняем тему при закрытии
+    saveTheme();
+}
+
+void GUI::loadTheme() {
+    // Загружаем сохраненную тему или используем светлую по умолчанию
+    darkTheme = settings->value("darkTheme", false).toBool();
+}
+
 
 void GUI::resizeEvent(QResizeEvent *event) {
     QMainWindow::resizeEvent(event);
@@ -125,6 +135,16 @@ void GUI::resizeEvent(QResizeEvent *event) {
     if (themeButton) {
         themeButton->move(20, 20);
     }
+}
+
+void GUI::saveTheme() {
+    // Сохраняем текущую тему
+    settings->setValue("darkTheme", darkTheme);
+}
+
+void GUI::closeEvent(QCloseEvent *event) {
+    saveTheme();
+    QMainWindow::closeEvent(event);
 }
 
 void GUI::calculateButtonPositions() {
@@ -148,6 +168,9 @@ void GUI::toggleTheme() {
 
     // Обновляем иконку кнопки
     themeButton->setText(darkTheme ? "☀️" : "🌙");
+
+    // Сохраняем выбор темы
+    saveTheme();
 }
 
 void GUI::updateTheme() {
@@ -168,12 +191,14 @@ void GUI::updateTheme() {
                 border-radius: 25px;
                 font-size: 20px;
                 background-color: %2;
+                color: %3;
             }
             QPushButton:hover {
-                background-color: %3;
+                background-color: %4;
             }
         )").arg(darkTheme ? "#666" : "#555")
           .arg(darkTheme ? "#333" : "#f0f0f0")
+          .arg(darkTheme ? "#eee" : "#333")
           .arg(darkTheme ? "#444" : "#ddd"));
     }
 }

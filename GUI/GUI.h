@@ -12,6 +12,7 @@
 #include <QDialogButtonBox>
 #include <QResizeEvent>
 #include <QPropertyAnimation>
+#include <QSettings>
 #include "../include/GameLoop.h"
 #include "../include/Game.h"
 #include <string>
@@ -43,7 +44,7 @@ class GUI : public QMainWindow {
 public:
     explicit GUI(QWidget *parent = nullptr);
     GUI(QWidget *parent, Game *game);
-    ~GUI() override = default;
+    ~GUI() override;
 
     void print(std::string message);
     void printField();
@@ -58,6 +59,7 @@ signals:
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void calculateButtonPositions();
+    void closeEvent(QCloseEvent *event) override;
 
 private slots:
     void handleEasy();
@@ -68,6 +70,8 @@ private slots:
 
 private:
     void updateTheme();
+    void loadTheme();
+    void saveTheme();
 
     Game *game;
     QWidget *centralWidget;
@@ -76,6 +80,7 @@ private:
     unsigned int *minesPtr;
     bool *choiceMadePtr;
     bool darkTheme;
+    QSettings *settings;
 
     AnimatedButton *easyButton;
     AnimatedButton *mediumButton;
