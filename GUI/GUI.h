@@ -93,47 +93,43 @@ private:
 
 class GameWidget : public QWidget {
     Q_OBJECT
-
 public:
     explicit GameWidget(Game *game, bool darkTheme, QWidget *parent = nullptr);
+    ~GameWidget() override;
 
-    ~GameWidget();
-
-    void setGame(Game *newGame);
-
+    void setGame(Game* newGame);
     void resetGameState();
-
     void updateTheme(bool darkTheme);
-
     void updateGameField();
-
     void resizeCells();
-
     void showEndGameDialog(bool win);
 
-signals:
-    void cellClicked(int row, int col, Command command);
-
+    signals:
+        void cellClicked(int row, int col, Command command);
     void restartRequested();
-
     void exitToMenuRequested();
 
 private:
     void createGameField();
-
     void updateCell(int row, int col);
-
     void updateMineCounter();
+    void startTimer();   // Добавляем объявление
+    void stopTimer();    // Добавляем объявление
+    void resetTimer();   // Добавляем объявление
+    void updateTimer();  // Добавляем объявление
 
     Game *game;
     bool darkTheme;
     bool gameEnded;
-
     QGridLayout *gridLayout;
-    std::vector<std::vector<QPushButton *> > cellButtons;
+    std::vector<std::vector<QPushButton*>> cellButtons;
     AnimatedButton *restartButton;
     AnimatedButton *exitButton;
     QLabel *mineCounterLabel;
+    QLabel *timerLabel;   // Добавляем объявление
+    QTimer *gameTimer;    // Добавляем объявление
+    int elapsedSeconds;   // Добавляем объявление
+    bool timerStarted;    // Добавляем объявление
     QDialog *endGameDialog;
 };
 
