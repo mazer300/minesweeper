@@ -1,19 +1,17 @@
 #include "GUI.h"
 #include <QInputDialog>
 #include <QEventLoop>
-#include <QScreen>
 #include <QApplication>
 #include <QFont>
 #include <QPainter>
 #include <QPainterPath>
-#include <QIcon>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QMenu>
-#include <QAction>
 #include <QSizePolicy>
 #include <QSpacerItem>
+#include <QFormLayout>
+#include <QSpinBox>
 
 // Реализация AnimatedButton
 AnimatedButton::AnimatedButton(const QString &text, QWidget *parent)
@@ -62,26 +60,37 @@ void AnimatedButton::updateStyle(bool darkTheme) {
 void AnimatedButton::paintEvent(QPaintEvent *event) {
     QPushButton::paintEvent(event);
 
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-
     if (m_fillProgress > 0.0f) {
-        QPainterPath path;
-        path.addRoundedRect(rect(), 15, 15);
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
 
-        QRect fillRect = rect();
-        fillRect.setWidth(rect().width() * m_fillProgress);
+        // Центр кнопки
+        QPoint center = rect().center();
 
-        QPainterPath fillPath;
-        fillPath.addRoundedRect(fillRect, 15, 15);
+        // Максимальный радиус (расстояние от центра до угла)
+        double maxRadius = qSqrt(qPow(rect().width()/2.0, 2) + qPow(rect().height()/2.0, 2));
+        double currentRadius = maxRadius * m_fillProgress;
 
-        painter.setClipPath(fillPath);
-        painter.fillPath(path, QColor(255, 255, 255, isDarkTheme ? 60 : 120));
+        // Создаем путь для круга, расширяющегося из центра
+        QPainterPath clipPath;
+        clipPath.addEllipse(center, currentRadius, currentRadius);
+
+        // Применяем маску
+        painter.setClipPath(clipPath);
+
+        // Заливаем область внутри круга
+        QPainterPath backgroundPath;
+        backgroundPath.addRoundedRect(rect(), 15, 15);
+        painter.fillPath(backgroundPath, QColor(255, 255, 255, isDarkTheme ? 60 : 120));
+
         painter.setClipping(false);
     }
 
-    painter.setPen(isDarkTheme ? Qt::white : Qt::black);
-    painter.drawText(rect(), Qt::AlignCenter, text());
+    // Рисуем текст поверх анимации
+    QPainter textPainter(this);
+    textPainter.setRenderHint(QPainter::Antialiasing);
+    textPainter.setPen(isDarkTheme ? Qt::white : Qt::black);
+    textPainter.drawText(rect(), Qt::AlignCenter, text());
 }
 
 void AnimatedButton::enterEvent(QEnterEvent *event) {
@@ -124,6 +133,8 @@ GUI::GUI(QWidget *parent) : QMainWindow(parent), game(nullptr),
 
     // Применяем текущую тему
     updateTheme();
+    
+    showMainMenu();
 }
 
 GUI::GUI(QWidget *parent, Game *game) : GUI(parent) {
@@ -202,6 +213,8 @@ void GUI::updateTheme() {
     if (mediumButton) mediumButton->updateStyle(darkTheme);
     if (hardButton) hardButton->updateStyle(darkTheme);
     if (customButton) customButton->updateStyle(darkTheme);
+    if (restartButton) restartButton->updateStyle(darkTheme);
+    if (exitButton) exitButton->updateStyle(darkTheme);
 
     // Обновляем стиль кнопки темы
     if (themeButton) {
@@ -402,6 +415,48 @@ void GUI::setGame(Game *game) {
     createGameField();
 }
 
+void GUI::showMainMenu() {
+    clearGameField();
+    // Удаляем старые кнопки если есть
+    if (easyButton) easyButton->deleteLater();
+    if (mediumButton) mediumButton->deleteLater();
+    if (hardButton) hardButton->deleteLater();
+    if (customButton) customButton->deleteLater();
+
+    // Создаем кнопки главного меню
+    easyButton = new AnimatedButton("ЛЁГКИЙ\n\n9×9 клеток\n10 мин", centralWidget);
+    mediumButton = new AnimatedButton("СРЕДНИЙ\n\n16×16 клеток\n40 мин", centralWidget);
+    hardButton = new AnimatedButton("ТЯЖЁЛЫЙ\n\n30×16 клеток\n99 мин", centralWidget);
+    customButton = new AnimatedButton("НАСТРОЙКИ\n\nВыбрать параметры", centralWidget);
+
+    // Обновляем стили
+    easyButton->updateStyle(darkTheme);
+    mediumButton->updateStyle(darkTheme);
+    hardButton->updateStyle(darkTheme);
+    customButton->updateStyle(darkTheme);
+
+    QFont font;
+    font.setPointSize(16);
+    font.setBold(true);
+
+    easyButton->setFont(font);
+    mediumButton->setFont(font);
+    hardButton->setFont(font);
+    customButton->setFont(font);
+
+    connect(easyButton, &QPushButton::clicked, this, &GUI::handleEasy);
+    connect(mediumButton, &QPushButton::clicked, this, &GUI::handleMedium);
+    connect(hardButton, &QPushButton::clicked, this, &GUI::handleHard);
+    connect(customButton, &QPushButton::clicked, this, &GUI::handleCustom);
+
+    calculateButtonPositions();
+
+    easyButton->show();
+    mediumButton->show();
+    hardButton->show();
+    customButton->show();
+}
+
 // Game field implementation
 void GUI::createGameField() {
     clearGameField();
@@ -415,18 +470,15 @@ void GUI::createGameField() {
     topLayout->setAlignment(Qt::AlignCenter);
 
     mineCounterLabel = new QLabel(QString("Мины: %1").arg((int)game->getMines()));
-    mineCounterLabel->setStyleSheet("font-size: 18px; font-weight: bold;");
-    topLayout->addWidget(mineCounterLabel);
-
-    // Add spacer for centering
-    topLayout->addItem(new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));
-
-    restartButton = new QPushButton("Рестарт");
-    exitButton = new QPushButton("Выход в меню");
-    topLayout->addWidget(restartButton);
-    topLayout->addWidget(exitButton);
+    mineCounterLabel->setStyleSheet("font-size: 18px; font-weight: bold; padding: 10px;");
+    topLayout->addWidget(mineCounterLabel, 0, Qt::AlignCenter);
+    topLayout->addStretch();
 
     mainLayout->addLayout(topLayout);
+
+    // Центрированное игровое поле
+    QHBoxLayout *centerLayout = new QHBoxLayout;
+    centerLayout->setAlignment(Qt::AlignCenter);
 
     // Game field grid
     gridLayout = new QGridLayout;
@@ -464,13 +516,34 @@ void GUI::createGameField() {
         }
     }
 
-    // Center the game field
-    QHBoxLayout *fieldLayout = new QHBoxLayout;
-    fieldLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-    fieldLayout->addLayout(gridLayout);
-    fieldLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    centerLayout->addLayout(gridLayout);
+    mainLayout->addLayout(centerLayout);
 
-    mainLayout->addLayout(fieldLayout);
+    // Кнопки управления внизу
+    QHBoxLayout *buttonLayout = new QHBoxLayout;
+    buttonLayout->setAlignment(Qt::AlignCenter);
+
+    restartButton = new AnimatedButton("Рестарт", gameWidget);
+    exitButton = new AnimatedButton("Выход в меню", gameWidget);
+
+    // Стилизация как в главном меню
+    restartButton->updateStyle(darkTheme);
+    exitButton->updateStyle(darkTheme);
+    restartButton->setFixedSize(200, 80);
+    exitButton->setFixedSize(200, 80);
+
+    QFont buttonFont;
+    buttonFont.setPointSize(14);
+    buttonFont.setBold(true);
+    restartButton->setFont(buttonFont);
+    exitButton->setFont(buttonFont);
+
+    buttonLayout->addWidget(restartButton);
+    buttonLayout->addSpacing(20);
+    buttonLayout->addWidget(exitButton);
+
+    mainLayout->addLayout(buttonLayout);
+
     setCentralWidget(gameWidget);
 
     // Connect buttons
@@ -498,12 +571,18 @@ void GUI::clearGameField() {
         gridLayout = nullptr;
     }
 
-    delete restartButton;
-    restartButton = nullptr;
-    delete exitButton;
-    exitButton = nullptr;
-    delete mineCounterLabel;
-    mineCounterLabel = nullptr;
+    if (restartButton) {
+        restartButton->deleteLater();
+        restartButton = nullptr;
+    }
+    if (exitButton) {
+        exitButton->deleteLater();
+        exitButton = nullptr;
+    }
+    if (mineCounterLabel) {
+        mineCounterLabel->deleteLater();
+        mineCounterLabel = nullptr;
+    }
 }
 
 void GUI::updateCell(int row, int col) {
@@ -568,7 +647,7 @@ void GUI::resizeCells() {
 
     // Рассчитываем доступное пространство
     int availableWidth = width() - 40;
-    int availableHeight = height() - 100;
+    int availableHeight = height() - 200; // Учитываем место для кнопок и счетчика
 
     if (availableWidth <= 0 || availableHeight <= 0) return;
 
@@ -621,6 +700,9 @@ void GUI::restartGame() {
 
 void GUI::exitToMenu() {
     pendingCommand = Command::Exit;
+
+    // Очищаем игровое поле и показываем главное меню
+    showMainMenu();
 
     if (commandLoop) {
         commandLoop->quit();

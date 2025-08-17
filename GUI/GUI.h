@@ -5,21 +5,13 @@
 #include <QPushButton>
 #include <QWidget>
 #include <QMessageBox>
-#include <QEventLoop>
-#include <QDialog>
-#include <QFormLayout>
-#include <QSpinBox>
-#include <QDialogButtonBox>
 #include <QResizeEvent>
 #include <QPropertyAnimation>
 #include <QSettings>
 #include <QGridLayout>
-#include <QHBoxLayout>
 #include <QLabel>
-#include <QSpacerItem>
 #include <string>
 #include <vector>
-#include <algorithm>
 #include "../include/GameLoop.h"
 #include "../include/Game.h"
 
@@ -88,6 +80,7 @@ private:
     void updateMineCounter();
     void calculateButtonPositions();
     void resizeCells();
+    void showMainMenu();
 
     Game *game;
     QWidget *centralWidget;
@@ -108,8 +101,8 @@ private:
     // Game field components
     QGridLayout *gridLayout;
     std::vector<std::vector<QPushButton*>> cellButtons;
-    QPushButton *restartButton;
-    QPushButton *exitButton;
+    AnimatedButton *restartButton;
+    AnimatedButton *exitButton;
     QLabel *mineCounterLabel;
 
     // Command handling
