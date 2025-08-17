@@ -132,30 +132,40 @@ MainMenuWidget::MainMenuWidget(QWidget *parent, bool darkTheme)
     topLayout->addWidget(themeButton);
     mainLayout->addLayout(topLayout);
     
+    // Добавляем вертикальную растяжку перед сеткой
+    mainLayout->addStretch();
+
     // Grid layout for difficulty buttons
     QGridLayout *gridLayout = new QGridLayout;
     gridLayout->setSpacing(BUTTON_SPACING);
-    gridLayout->setContentsMargins(0, 0, 0, 0);
-    
+    // Устанавливаем фиксированные отступы вместо нулевых
+    gridLayout->setContentsMargins(20, 20, 20, 20);
+
     easyButton = new AnimatedButton("ЛЁГКИЙ\n\n9×9 клеток\n10 мин", this);
     mediumButton = new AnimatedButton("СРЕДНИЙ\n\n16×16 клеток\n40 мин", this);
     hardButton = new AnimatedButton("ТЯЖЁЛЫЙ\n\n30×16 клеток\n99 мин", this);
     customButton = new AnimatedButton("НАСТРОЙКИ\n\nВыбрать параметры", this);
-    
+
     // Set fixed size for buttons
     easyButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
     mediumButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
     hardButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
     customButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
-    
+
     // Add buttons to grid
     gridLayout->addWidget(easyButton, 0, 0, Qt::AlignCenter);
     gridLayout->addWidget(mediumButton, 0, 1, Qt::AlignCenter);
     gridLayout->addWidget(hardButton, 1, 0, Qt::AlignCenter);
     gridLayout->addWidget(customButton, 1, 1, Qt::AlignCenter);
-    
-    mainLayout->addLayout(gridLayout);
-    mainLayout->addStretch();
+
+    // Создаем горизонтальный лейаут для центрирования сетки
+    QHBoxLayout *centerLayout = new QHBoxLayout;
+    centerLayout->addStretch(); // Растягивающийся элемент слева
+    centerLayout->addLayout(gridLayout);
+    centerLayout->addStretch(); // Растягивающийся элемент справа
+
+    mainLayout->addLayout(centerLayout);
+    mainLayout->addStretch(); // Растягивающийся элемент снизу
     
     // Обновляем стили
     updateTheme(darkTheme);
@@ -510,21 +520,21 @@ void GameWidget::showEndGameDialog(bool win) {
     layout->addWidget(gameResultLabel);
 
     QPushButton *restartBtn = new QPushButton("Новая игра");
-    QPushButton *menuBtn = new QPushButton("Главное меню");
+    //QPushButton *menuBtn = new QPushButton("Главное меню");
 
     connect(restartBtn, &QPushButton::clicked, [this]() {
         endGameDialog->accept();
         emit restartRequested();
     });
 
-    connect(menuBtn, &QPushButton::clicked, [this]() {
+    /*connect(menuBtn, &QPushButton::clicked, [this]() {
         endGameDialog->accept();
         emit exitToMenuRequested();
-    });
+    });*/
 
     QHBoxLayout *btnLayout = new QHBoxLayout;
     btnLayout->addWidget(restartBtn);
-    btnLayout->addWidget(menuBtn);
+    // btnLayout->addWidget(menuBtn);
 
     layout->addLayout(btnLayout);
 
