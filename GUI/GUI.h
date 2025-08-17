@@ -1,4 +1,3 @@
-
 #ifndef GUI_H
 #define GUI_H
 
@@ -29,17 +28,25 @@
 class AnimatedButton : public QPushButton {
     Q_OBJECT
     Q_PROPERTY(float fillProgress READ fillProgress WRITE setFillProgress)
+
 public:
     explicit AnimatedButton(const QString &text, QWidget *parent = nullptr);
+
     ~AnimatedButton() override;
+
     float fillProgress() const;
+
     void setFillProgress(float progress);
+
     void updateStyle(bool darkTheme);
+
     void setFixedSize(int width, int height);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+
     void enterEvent(QEnterEvent *event) override;
+
     void leaveEvent(QEvent *event) override;
 
 private:
@@ -50,18 +57,24 @@ private:
 
 class MainMenuWidget : public QWidget {
     Q_OBJECT
+
 public:
     explicit MainMenuWidget(QWidget *parent = nullptr, bool darkTheme = false);
+
     void updateTheme(bool darkTheme);
 
 signals:
     void difficultySelected(unsigned int rows, unsigned int cols, unsigned int mines);
+
     void themeToggled();
 
 private slots:
     void handleEasy();
+
     void handleMedium();
+
     void handleHard();
+
     void handleCustom();
 
 private:
@@ -80,25 +93,36 @@ private:
 
 class GameWidget : public QWidget {
     Q_OBJECT
+
 public:
     explicit GameWidget(Game *game, bool darkTheme, QWidget *parent = nullptr);
+
     ~GameWidget();
 
-    void setGame(Game* newGame);
+    void setGame(Game *newGame);
+
     void resetGameState();
+
     void updateTheme(bool darkTheme);
+
     void updateGameField();
+
     void resizeCells();
+
     void showEndGameDialog(bool win);
 
-    signals:
-        void cellClicked(int row, int col, Command command);
+signals:
+    void cellClicked(int row, int col, Command command);
+
     void restartRequested();
+
     void exitToMenuRequested();
 
 private:
     void createGameField();
+
     void updateCell(int row, int col);
+
     void updateMineCounter();
 
     Game *game;
@@ -106,7 +130,7 @@ private:
     bool gameEnded;
 
     QGridLayout *gridLayout;
-    std::vector<std::vector<QPushButton*>> cellButtons;
+    std::vector<std::vector<QPushButton *> > cellButtons;
     AnimatedButton *restartButton;
     AnimatedButton *exitButton;
     QLabel *mineCounterLabel;
@@ -118,14 +142,21 @@ class GUI : public QMainWindow {
 
 public:
     explicit GUI(QWidget *parent = nullptr);
+
     ~GUI() override;
 
     void print(std::string message);
+
     void printField();
+
     Command getCommand();
+
     std::tuple<int, int> getCoords() const;
+
     void getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_cols, unsigned int &number_of_mines);
+
     void setGame(Game *game);
+
     void showEndGameDialog(bool win);
 
 signals:
@@ -136,16 +167,24 @@ protected:
 
 private slots:
     void toggleTheme();
+
     void handleCellClicked(int row, int col, Command command);
+
     void handleDifficultySelected(unsigned int rows, unsigned int cols, unsigned int mines);
+
     void handleRestart();
+
     void handleExitToMenu();
 
 private:
     void updateTheme();
+
     void loadTheme();
+
     void saveTheme();
+
     void showMainMenu();
+
     void showGameScreen();
 
     Game *game;

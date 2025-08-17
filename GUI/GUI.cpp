@@ -1,4 +1,3 @@
-
 #include "GUI.h"
 #include <QInputDialog>
 #include <QEventLoop>
@@ -55,8 +54,8 @@ void AnimatedButton::updateStyle(bool darkTheme) {
             background-color: %3;
         }
     )").arg(darkTheme ? "#444" : "#555")
-      .arg(darkTheme ? "#eee" : "#333")
-      .arg(darkTheme ? "#333" : "#f0f0f0");
+            .arg(darkTheme ? "#eee" : "#333")
+            .arg(darkTheme ? "#333" : "#f0f0f0");
 
     setStyleSheet(style);
 }
@@ -71,26 +70,26 @@ void AnimatedButton::paintEvent(QPaintEvent *event) {
     if (m_fillProgress > 0.0f) {
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
-        
+
         // Центр кнопки
         QPoint center = rect().center();
-        
+
         // Максимальный радиус (расстояние от центра до угла)
-        double maxRadius = qSqrt(qPow(rect().width()/2.0, 2) + qPow(rect().height()/2.0, 2));
+        double maxRadius = qSqrt(qPow(rect().width() / 2.0, 2) + qPow(rect().height() / 2.0, 2));
         double currentRadius = maxRadius * m_fillProgress;
-        
+
         // Создаем путь для круга, расширяющегося из центра
         QPainterPath clipPath;
         clipPath.addEllipse(center, currentRadius, currentRadius);
-        
+
         // Применяем маску
         painter.setClipPath(clipPath);
-        
+
         // Заливаем область внутри круга
         QPainterPath backgroundPath;
         backgroundPath.addRoundedRect(rect(), 15, 15);
         painter.fillPath(backgroundPath, QColor(255, 255, 255, isDarkTheme ? 60 : 120));
-        
+
         painter.setClipping(false);
     }
 
@@ -116,30 +115,25 @@ void AnimatedButton::leaveEvent(QEvent *event) {
 }
 
 // Реализация MainMenuWidget
-MainMenuWidget::MainMenuWidget(QWidget *parent, bool darkTheme) 
+MainMenuWidget::MainMenuWidget(QWidget *parent, bool darkTheme)
     : QWidget(parent), darkTheme(darkTheme) {
-    
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(30, 30, 30, 30);
-    
+
     // Top layout for theme button
     QHBoxLayout *topLayout = new QHBoxLayout;
     topLayout->setContentsMargins(0, 0, 0, 20);
     topLayout->addStretch();
-    
+
     themeButton = new QPushButton(darkTheme ? "☀️" : "🌙", this);
     themeButton->setFixedSize(50, 50);
     topLayout->addWidget(themeButton);
     mainLayout->addLayout(topLayout);
-    
-    // Добавляем вертикальную растяжку перед сеткой
-    mainLayout->addStretch();
 
     // Grid layout for difficulty buttons
     QGridLayout *gridLayout = new QGridLayout;
     gridLayout->setSpacing(BUTTON_SPACING);
-    // Устанавливаем фиксированные отступы вместо нулевых
-    gridLayout->setContentsMargins(20, 20, 20, 20);
+    gridLayout->setContentsMargins(0, 0, 0, 0);
 
     easyButton = new AnimatedButton("ЛЁГКИЙ\n\n9×9 клеток\n10 мин", this);
     mediumButton = new AnimatedButton("СРЕДНИЙ\n\n16×16 клеток\n40 мин", this);
@@ -158,49 +152,50 @@ MainMenuWidget::MainMenuWidget(QWidget *parent, bool darkTheme)
     gridLayout->addWidget(hardButton, 1, 0, Qt::AlignCenter);
     gridLayout->addWidget(customButton, 1, 1, Qt::AlignCenter);
 
-    // Создаем горизонтальный лейаут для центрирования сетки
-    QHBoxLayout *centerLayout = new QHBoxLayout;
-    centerLayout->addStretch(); // Растягивающийся элемент слева
+    // Центрируем сетку с помощью горизонтального лейаута с растяжками
+    QHBoxLayout *centerLayout = new QHBoxLayout();
+    centerLayout->addStretch();
     centerLayout->addLayout(gridLayout);
-    centerLayout->addStretch(); // Растягивающийся элемент справа
+    centerLayout->addStretch();
 
     mainLayout->addLayout(centerLayout);
-    mainLayout->addStretch(); // Растягивающийся элемент снизу
-    
+    mainLayout->addStretch();
+
     // Обновляем стили
     updateTheme(darkTheme);
-    
+
     QFont font;
     font.setPointSize(16);
     font.setBold(true);
-    
+
     easyButton->setFont(font);
     mediumButton->setFont(font);
     hardButton->setFont(font);
     customButton->setFont(font);
-    
+
     connect(easyButton, &QPushButton::clicked, this, &MainMenuWidget::handleEasy);
     connect(mediumButton, &QPushButton::clicked, this, &MainMenuWidget::handleMedium);
     connect(hardButton, &QPushButton::clicked, this, &MainMenuWidget::handleHard);
     connect(customButton, &QPushButton::clicked, this, &MainMenuWidget::handleCustom);
     connect(themeButton, &QPushButton::clicked, this, [this]() { emit themeToggled(); });
-    
+
     setLayout(mainLayout);
 }
 
 void MainMenuWidget::updateTheme(bool darkTheme) {
     this->darkTheme = darkTheme;
     themeButton->setText(darkTheme ? "☀️" : "🌙");
-    
-    // Устанавливаем цвет фона
-    setStyleSheet(QString("background-color: %1;").arg(darkTheme ? "#222" : "#f5f5f5"));
-    
+
+    // Устанавливаем цвет фона для всего виджета
+    QString bgColor = darkTheme ? "#222" : "#f5f5f5";
+    setStyleSheet(QString("background-color: %1;").arg(bgColor));
+
     // Обновляем стиль кнопок
     easyButton->updateStyle(darkTheme);
     mediumButton->updateStyle(darkTheme);
     hardButton->updateStyle(darkTheme);
     customButton->updateStyle(darkTheme);
-    
+
     // Обновляем стиль кнопки темы
     themeButton->setStyleSheet(QString(R"(
         QPushButton {
@@ -214,9 +209,9 @@ void MainMenuWidget::updateTheme(bool darkTheme) {
             background-color: %4;
         }
     )").arg(darkTheme ? "#666" : "#555")
-      .arg(darkTheme ? "#333" : "#f0f0f0")
-      .arg(darkTheme ? "#eee" : "#333")
-      .arg(darkTheme ? "#444" : "#ddd"));
+        .arg(darkTheme ? "#333" : "#f0f0f0")
+        .arg(darkTheme ? "#eee" : "#333")
+        .arg(darkTheme ? "#444" : "#ddd"));
 }
 
 void MainMenuWidget::handleEasy() {
@@ -237,7 +232,7 @@ void MainMenuWidget::handleCustom() {
     dialog.setFixedSize(400, 300);
 
     // Настройка стиля диалога согласно теме
-    dialog.setStyleSheet(QString(R"(
+    QString dialogStyle = QString(R"(
         QDialog {
             background-color: %1;
             color: %2;
@@ -246,7 +241,9 @@ void MainMenuWidget::handleCustom() {
             color: %2;
         }
     )").arg(darkTheme ? "#333" : "#f5f5f5")
-      .arg(darkTheme ? "#eee" : "#333"));
+            .arg(darkTheme ? "#eee" : "#333");
+
+    dialog.setStyleSheet(dialogStyle);
 
     QFormLayout form(&dialog);
 
@@ -275,7 +272,7 @@ void MainMenuWidget::handleCustom() {
     form.addRow("Количество мин:", minesSpin);
 
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
-                              Qt::Horizontal, &dialog);
+                               Qt::Horizontal, &dialog);
     form.addRow(&buttonBox);
 
     connect(&buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
@@ -293,13 +290,12 @@ void MainMenuWidget::resizeEvent(QResizeEvent *event) {
 // Реализация GameWidget
 GameWidget::GameWidget(Game *game, bool darkTheme, QWidget *parent)
     : QWidget(parent), game(game), darkTheme(darkTheme), gameEnded(false), endGameDialog(nullptr) {
-    
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(20, 20, 20, 20);
-    
+
     // Top panel with mine counter
     QHBoxLayout *topLayout = new QHBoxLayout;
-    mineCounterLabel = new QLabel(QString("Мины: %1").arg((int)game->getMines()));
+    mineCounterLabel = new QLabel(QString("Мины: %1").arg((int) game->getMines()));
     mineCounterLabel->setStyleSheet("font-size: 18px; font-weight: bold;");
     topLayout->addWidget(mineCounterLabel, 0, Qt::AlignLeft);
     topLayout->addStretch();
@@ -308,10 +304,10 @@ GameWidget::GameWidget(Game *game, bool darkTheme, QWidget *parent)
     // Game field grid
     QHBoxLayout *fieldLayout = new QHBoxLayout;
     fieldLayout->setAlignment(Qt::AlignCenter);
-    
+
     gridLayout = new QGridLayout;
     gridLayout->setSpacing(2);
-    
+
     cellButtons.resize(game->getRows());
     for (unsigned int i = 0; i < game->getRows(); i++) {
         cellButtons[i].resize(game->getCols());
@@ -322,7 +318,7 @@ GameWidget::GameWidget(Game *game, bool darkTheme, QWidget *parent)
             button->setProperty("row", static_cast<int>(i));
             button->setProperty("col", static_cast<int>(j));
             button->setContextMenuPolicy(Qt::CustomContextMenu);
-            
+
             connect(button, &QPushButton::clicked, [this, button]() {
                 int row = button->property("row").toInt();
                 int col = button->property("col").toInt();
@@ -330,7 +326,7 @@ GameWidget::GameWidget(Game *game, bool darkTheme, QWidget *parent)
                     emit cellClicked(row, col, Command::Attack);
                 }
             });
-            
+
             connect(button, &QPushButton::customContextMenuRequested, [this, button]() {
                 int row = button->property("row").toInt();
                 int col = button->property("col").toInt();
@@ -338,40 +334,40 @@ GameWidget::GameWidget(Game *game, bool darkTheme, QWidget *parent)
                     emit cellClicked(row, col, Command::PutFlag);
                 }
             });
-            
+
             gridLayout->addWidget(button, i, j);
             cellButtons[i][j] = button;
         }
     }
-    
+
     fieldLayout->addLayout(gridLayout);
     mainLayout->addLayout(fieldLayout);
 
     // Bottom panel with buttons
     QHBoxLayout *buttonLayout = new QHBoxLayout;
     buttonLayout->setAlignment(Qt::AlignCenter);
-    
+
     restartButton = new AnimatedButton("Рестарт", this);
     exitButton = new AnimatedButton("Выход в меню", this);
-    
+
     restartButton->setFixedSize(180, 60);
     exitButton->setFixedSize(180, 60);
-    
+
     QFont buttonFont;
     buttonFont.setPointSize(14);
     buttonFont.setBold(true);
     restartButton->setFont(buttonFont);
     exitButton->setFont(buttonFont);
-    
+
     buttonLayout->addWidget(restartButton);
     buttonLayout->addSpacing(20);
     buttonLayout->addWidget(exitButton);
-    
+
     mainLayout->addLayout(buttonLayout);
-    
+
     connect(restartButton, &QPushButton::clicked, this, [this]() { emit restartRequested(); });
     connect(exitButton, &QPushButton::clicked, this, [this]() { emit exitToMenuRequested(); });
-    
+
     updateTheme(darkTheme);
     updateGameField();
 }
@@ -382,7 +378,7 @@ GameWidget::~GameWidget() {
     }
 }
 
-void GameWidget::setGame(Game* newGame) {
+void GameWidget::setGame(Game *newGame) {
     game = newGame;
     gameEnded = false;
     updateGameField();
@@ -391,11 +387,15 @@ void GameWidget::setGame(Game* newGame) {
 
 void GameWidget::updateTheme(bool darkTheme) {
     this->darkTheme = darkTheme;
-    
+
+    // Устанавливаем цвет фона для всего виджета
+    QString bgColor = darkTheme ? "#222" : "#f5f5f5";
+    setStyleSheet(QString("background-color: %1;").arg(bgColor));
+
     // Обновляем стиль кнопок
     if (restartButton) restartButton->updateStyle(darkTheme);
     if (exitButton) exitButton->updateStyle(darkTheme);
-    
+
     // Обновляем стиль счетчика мин
     if (mineCounterLabel) {
         mineCounterLabel->setStyleSheet(
@@ -403,7 +403,7 @@ void GameWidget::updateTheme(bool darkTheme) {
             .arg(darkTheme ? "#eee" : "#333")
         );
     }
-    
+
     // Обновляем игровое поле
     updateGameField();
 }
@@ -422,8 +422,8 @@ void GameWidget::updateGameField() {
 void GameWidget::updateCell(int row, int col) {
     if (!game || row >= cellButtons.size() || col >= cellButtons[0].size()) return;
 
-    Cell& cell = game->getCell(row, col);
-    QPushButton* button = cellButtons[row][col];
+    Cell &cell = game->getCell(row, col);
+    QPushButton *button = cellButtons[row][col];
 
     QString style = "font-weight: bold; font-size: 14px;";
     QString text = "";
@@ -440,14 +440,13 @@ void GameWidget::updateCell(int row, int col) {
         darkTheme ? "#ffb74d" : "#f57c00", // 5: orange
         darkTheme ? "#4db6ac" : "#00796b", // 6: teal
         darkTheme ? "#212121" : "#212121", // 7: black
-        darkTheme ? "#9e9e9e" : "#616161"  // 8: gray
+        darkTheme ? "#9e9e9e" : "#616161" // 8: gray
     };
 
     if (cell.isOpen()) {
         if (cell.isFlag() && game->getState() != StateGame::Lose) {
             text = "🚩";
             style += "background-color: #ffcc00;";
-
         } else if (cell.isMine()) {
             text = "💣";
             style += "background-color: #ff4444;";
@@ -455,8 +454,8 @@ void GameWidget::updateCell(int row, int col) {
             int state = cell.getState();
             if (state > 0) {
                 style += QString("color: %1; background-color: %2;")
-                         .arg(state <= 8 ? numberColors[state-1] : textColor)
-                         .arg(openBgColor);
+                        .arg(state <= 8 ? numberColors[state - 1] : textColor)
+                        .arg(openBgColor);
                 text = QString::number(state);
             } else {
                 style += QString("background-color: %1;").arg(openBgColor);
@@ -472,7 +471,7 @@ void GameWidget::updateCell(int row, int col) {
 
 void GameWidget::updateMineCounter() {
     if (mineCounterLabel && game) {
-        mineCounterLabel->setText(QString("Мины: %1").arg((int)game->getMines()));
+        mineCounterLabel->setText(QString("Мины: %1").arg((int) game->getMines()));
     }
 }
 
@@ -520,7 +519,7 @@ void GameWidget::showEndGameDialog(bool win) {
     layout->addWidget(gameResultLabel);
 
     QPushButton *restartBtn = new QPushButton("Новая игра");
-    //QPushButton *menuBtn = new QPushButton("Главное меню");
+    // QPushButton *menuBtn = new QPushButton("Главное меню");
 
     connect(restartBtn, &QPushButton::clicked, [this]() {
         endGameDialog->accept();
@@ -553,9 +552,9 @@ void GameWidget::showEndGameDialog(bool win) {
             border-radius: 5px;
         }
     )").arg(darkTheme ? "#333" : "#f5f5f5")
-      .arg(darkTheme ? "#eee" : "#333")
-      .arg(darkTheme ? "#444" : "#ddd")
-      .arg(darkTheme ? "#666" : "#aaa");
+            .arg(darkTheme ? "#eee" : "#333")
+            .arg(darkTheme ? "#444" : "#ddd")
+            .arg(darkTheme ? "#666" : "#aaa");
 
     endGameDialog->setStyleSheet(dialogStyle);
     endGameDialog->exec();
@@ -563,8 +562,7 @@ void GameWidget::showEndGameDialog(bool win) {
 
 // Реализация GUI
 GUI::GUI(QWidget *parent) : QMainWindow(parent), game(nullptr),
-    commandLoop(nullptr), mainMenuWidget(nullptr), gameWidget(nullptr) {
-
+                            commandLoop(nullptr), mainMenuWidget(nullptr), gameWidget(nullptr) {
     // Инициализация настроек
     settings = new QSettings("Minesweeper", "ThemeSettings", this);
 
@@ -574,13 +572,16 @@ GUI::GUI(QWidget *parent) : QMainWindow(parent), game(nullptr),
     centralWidget = new QWidget(this);
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
     mainLayout->setContentsMargins(0, 0, 0, 0);
-    
+
     stackedWidget = new QStackedWidget(centralWidget);
     mainLayout->addWidget(stackedWidget);
-    
+
     setCentralWidget(centralWidget);
     resize(1000, 800);
-    
+
+    // Устанавливаем цвет фона для центрального виджета
+    updateTheme();
+
     showMainMenu();
 }
 
@@ -611,16 +612,16 @@ void GUI::showMainMenu() {
         gameWidget->deleteLater();
         gameWidget = nullptr;
     }
-    
+
     if (!mainMenuWidget) {
         mainMenuWidget = new MainMenuWidget(stackedWidget, darkTheme);
         stackedWidget->addWidget(mainMenuWidget);
-        connect(mainMenuWidget, &MainMenuWidget::difficultySelected, 
+        connect(mainMenuWidget, &MainMenuWidget::difficultySelected,
                 this, &GUI::handleDifficultySelected);
-        connect(mainMenuWidget, &MainMenuWidget::themeToggled, 
+        connect(mainMenuWidget, &MainMenuWidget::themeToggled,
                 this, &GUI::toggleTheme);
     }
-    
+
     stackedWidget->setCurrentWidget(mainMenuWidget);
 }
 
@@ -628,14 +629,14 @@ void GUI::showGameScreen() {
     if (!gameWidget) {
         gameWidget = new GameWidget(game, darkTheme, stackedWidget);
         stackedWidget->addWidget(gameWidget);
-        connect(gameWidget, &GameWidget::cellClicked, 
+        connect(gameWidget, &GameWidget::cellClicked,
                 this, &GUI::handleCellClicked);
-        connect(gameWidget, &GameWidget::restartRequested, 
+        connect(gameWidget, &GameWidget::restartRequested,
                 this, &GUI::handleRestart);
-        connect(gameWidget, &GameWidget::exitToMenuRequested, 
+        connect(gameWidget, &GameWidget::exitToMenuRequested,
                 this, &GUI::handleExitToMenu);
     }
-    
+
     stackedWidget->setCurrentWidget(gameWidget);
     gameWidget->resizeCells();
 }
@@ -647,6 +648,10 @@ void GUI::toggleTheme() {
 }
 
 void GUI::updateTheme() {
+    // Устанавливаем цвет фона для центрального виджета
+    QString bgColor = darkTheme ? "#222" : "#f5f5f5";
+    centralWidget->setStyleSheet(QString("background-color: %1;").arg(bgColor));
+
     // Обновляем текущий экран
     if (mainMenuWidget) {
         mainMenuWidget->updateTheme(darkTheme);
@@ -660,11 +665,11 @@ void GUI::getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_co
     selectedRows = number_of_rows;
     selectedCols = number_of_cols;
     selectedMines = number_of_mines;
-    
+
     QEventLoop loop;
     connect(this, &GUI::difficultyChosen, &loop, &QEventLoop::quit);
     loop.exec();
-    
+
     number_of_rows = selectedRows;
     number_of_cols = selectedCols;
     number_of_mines = selectedMines;
@@ -694,7 +699,7 @@ std::tuple<int, int> GUI::getCoords() const {
 
 void GUI::setGame(Game *game) {
     this->game = game;
-    
+
     if (gameWidget) {
         gameWidget->setGame(game);
     } else {
@@ -727,7 +732,7 @@ void GUI::handleCellClicked(int row, int col, Command command) {
 
 void GUI::handleRestart() {
     pendingCommand = Command::Restart;
-    
+
     if (commandLoop) {
         commandLoop->quit();
     }
@@ -736,7 +741,7 @@ void GUI::handleRestart() {
 void GUI::handleExitToMenu() {
     pendingCommand = Command::Exit;
     showMainMenu();
-    
+
     if (commandLoop) {
         commandLoop->quit();
     }
