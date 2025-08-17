@@ -5,14 +5,87 @@
 #include <QApplication>
 #include <QFont>
 #include <QPainter>
+#include <QPainterPath>
 
+// Реализация AnimatedButton
+AnimatedButton::AnimatedButton(const QString &text, QWidget *parent)
+    : QPushButton(text, parent), m_fillProgress(0.0f) {
+    fillAnimation = new QPropertyAnimation(this, "fillProgress", this);
+    fillAnimation->setDuration(300); // Длительность анимации в мс
+    fillAnimation->setEasingCurve(QEasingCurve::OutQuad);
+
+    setMouseTracking(true);
+    setFixedSize(300, 300);
+
+    // Настройка стиля
+    setStyleSheet(R"(
+        QPushButton {
+            border: 3px solid #555;
+            border-radius: 15px;
+            padding: 20px;
+            font-weight: bold;
+            color: #333;
+            background: transparent;
+        }
+    )");
+}
+
+float AnimatedButton::fillProgress() const {
+    return m_fillProgress;
+}
+
+void AnimatedButton::setFillProgress(float progress) {
+    m_fillProgress = progress;
+    update(); // Перерисовываем кнопку
+}
+
+void AnimatedButton::paintEvent(QPaintEvent *event) {
+    QPushButton::paintEvent(event);
+
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    // Рисуем фон анимации заполнения
+    if (m_fillProgress > 0.0f) {
+        QPainterPath path;
+        path.addRoundedRect(rect(), 15, 15);
+
+        QRect fillRect = rect();
+        fillRect.setWidth(rect().width() * m_fillProgress);
+
+        QPainterPath fillPath;
+        fillPath.addRoundedRect(fillRect, 15, 15);
+
+        painter.setClipPath(fillPath);
+        painter.fillPath(path, QColor(255, 255, 255, 120));
+        painter.setClipping(false);
+    }
+
+    // Рисуем текст
+    painter.setPen(Qt::black);
+    painter.drawText(rect(), Qt::AlignCenter, text());
+}
+
+void AnimatedButton::enterEvent(QEnterEvent *event) {
+    fillAnimation->setStartValue(0.0f);
+    fillAnimation->setEndValue(1.0f);
+    fillAnimation->start();
+    QPushButton::enterEvent(event);
+}
+
+void AnimatedButton::leaveEvent(QEvent *event) {
+    fillAnimation->setStartValue(1.0f);
+    fillAnimation->setEndValue(0.0f);
+    fillAnimation->start();
+    QPushButton::leaveEvent(event);
+}
+
+// Реализация GUI
 GUI::GUI(QWidget *parent) : QMainWindow(parent), game(nullptr),
     easyButton(nullptr), mediumButton(nullptr), hardButton(nullptr), customButton(nullptr) {
     centralWidget = new QWidget(this);
     centralWidget->setMouseTracking(true);
     setCentralWidget(centralWidget);
-
-    // Установка начального размера окна
     resize(1000, 800);
 }
 
@@ -35,11 +108,9 @@ void GUI::calculateButtonPositions() {
     int totalWidth = 2 * BUTTON_SIZE + BUTTON_SPACING;
     int totalHeight = 2 * BUTTON_SIZE + BUTTON_SPACING;
 
-    // Центрируем всю группу кнопок
     int startX = (width() - totalWidth) / 2;
     int startY = (height() - totalHeight) / 2;
 
-    // Устанавливаем позиции кнопок с фиксированными расстояниями
     easyButton->move(startX, startY);
     mediumButton->move(startX + BUTTON_SIZE + BUTTON_SPACING, startY);
     hardButton->move(startX, startY + BUTTON_SIZE + BUTTON_SPACING);
@@ -51,23 +122,16 @@ void GUI::getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_co
     colsPtr = &number_of_cols;
     minesPtr = &number_of_mines;
 
-    // Удаляем старые кнопки, если они есть
     if (easyButton) easyButton->deleteLater();
     if (mediumButton) mediumButton->deleteLater();
     if (hardButton) hardButton->deleteLater();
     if (customButton) customButton->deleteLater();
 
-    // Создаем новые кнопки
-    easyButton = new QPushButton("ЛЁГКИЙ\n\n9×9 клеток\n10 мин", centralWidget);
-    mediumButton = new QPushButton("СРЕДНИЙ\n\n16×16 клеток\n40 мин", centralWidget);
-    hardButton = new QPushButton("ТЯЖЁЛЫЙ\n\n30×16 клеток\n99 мин", centralWidget);
-    customButton = new QPushButton("ПОЛЬЗОТЕЛЬСКИЙ\n\nВыбрать параметры", centralWidget);
-
-    // Устанавливаем фиксированный размер кнопок
-    easyButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
-    mediumButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
-    hardButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
-    customButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
+    // Создаем анимированные кнопки
+    easyButton = new AnimatedButton("ЛЁГКИЙ\n\n9×9 клеток\n10 мин", centralWidget);
+    mediumButton = new AnimatedButton("СРЕДНИЙ\n\n16×16 клеток\n40 мин", centralWidget);
+    hardButton = new AnimatedButton("ТЯЖЁЛЫЙ\n\n30×16 клеток\n99 мин", centralWidget);
+    customButton = new AnimatedButton("НАСТРОЙКИ\n\nВыбрать параметры", centralWidget);
 
     // Настраиваем шрифт
     QFont font;
@@ -79,27 +143,11 @@ void GUI::getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_co
     hardButton->setFont(font);
     customButton->setFont(font);
 
-    // Стилизация кнопок
-    QString buttonStyle = R"(
-        QPushButton {
-            border: 3px solid #555;
-            border-radius: 15px;
-            padding: 20px;
-            font-weight: bold;
-            color: #333;
-        }
-        QPushButton:hover {
-            border: 3px solid #444;
-        }
-        QPushButton:pressed {
-            border: 3px solid #666;
-        }
-    )";
-
-    easyButton->setStyleSheet(buttonStyle + "background-color: #c8e6c9;");
-    mediumButton->setStyleSheet(buttonStyle + "background-color: #bbdefb;");
-    hardButton->setStyleSheet(buttonStyle + "background-color: #ffcdd2;");
-    customButton->setStyleSheet(buttonStyle + "background-color: #fff9c4;");
+    // Устанавливаем цвета фона для анимации
+    easyButton->setStyleSheet(easyButton->styleSheet() + "background-color: #c8e6c9;");
+    mediumButton->setStyleSheet(mediumButton->styleSheet() + "background-color: #bbdefb;");
+    hardButton->setStyleSheet(hardButton->styleSheet() + "background-color: #ffcdd2;");
+    customButton->setStyleSheet(customButton->styleSheet() + "background-color: #fff9c4;");
 
     // Подключаем сигналы
     connect(easyButton, &QPushButton::clicked, this, &GUI::handleEasy);
@@ -107,16 +155,13 @@ void GUI::getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_co
     connect(hardButton, &QPushButton::clicked, this, &GUI::handleHard);
     connect(customButton, &QPushButton::clicked, this, &GUI::handleCustom);
 
-    // Рассчитываем позиции
     calculateButtonPositions();
 
-    // Показываем кнопки
     easyButton->show();
     mediumButton->show();
     hardButton->show();
     customButton->show();
 
-    // Ожидание выбора пользователя
     QEventLoop loop;
     bool choiceMade = false;
     choiceMadePtr = &choiceMade;
