@@ -12,7 +12,6 @@
 #include <QDialogButtonBox>
 #include <QResizeEvent>
 #include <QPropertyAnimation>
-#include <QGraphicsEffect>
 #include "../include/GameLoop.h"
 #include "../include/Game.h"
 #include <string>
@@ -24,6 +23,7 @@ public:
     explicit AnimatedButton(const QString &text, QWidget *parent = nullptr);
     float fillProgress() const;
     void setFillProgress(float progress);
+    void updateStyle(bool darkTheme);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -34,6 +34,7 @@ private:
     QPropertyAnimation *fillAnimation;
     float m_fillProgress;
     QColor fillColor;
+    bool isDarkTheme;
 };
 
 class GUI : public QMainWindow {
@@ -63,19 +64,24 @@ private slots:
     void handleMedium();
     void handleHard();
     void handleCustom();
+    void toggleTheme();
 
 private:
+    void updateTheme();
+
     Game *game;
     QWidget *centralWidget;
     unsigned int *rowsPtr;
     unsigned int *colsPtr;
     unsigned int *minesPtr;
     bool *choiceMadePtr;
+    bool darkTheme;
 
     AnimatedButton *easyButton;
     AnimatedButton *mediumButton;
     AnimatedButton *hardButton;
     AnimatedButton *customButton;
+    QPushButton *themeButton;
 
     const int BUTTON_SIZE = 300;
     const int BUTTON_SPACING = 40;
