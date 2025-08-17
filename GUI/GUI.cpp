@@ -358,16 +358,16 @@ void GUI::handleCustom() {
     QFormLayout form(&dialog);
 
     QSpinBox *widthSpin = new QSpinBox(&dialog);
-    widthSpin->setRange(5, 50);
-    widthSpin->setValue(10);
+    widthSpin->setRange(2, 69);
+    widthSpin->setValue(9);
 
     QSpinBox *heightSpin = new QSpinBox(&dialog);
-    heightSpin->setRange(5, 50);
-    heightSpin->setValue(10);
+    heightSpin->setRange(2, 45);
+    heightSpin->setValue(9);
 
     QSpinBox *minesSpin = new QSpinBox(&dialog);
     minesSpin->setRange(1, widthSpin->value() * heightSpin->value() - 1);
-    minesSpin->setValue(20);
+    minesSpin->setValue(10);
 
     connect(widthSpin, QOverload<int>::of(&QSpinBox::valueChanged), [=](int value) {
         minesSpin->setMaximum(value * heightSpin->value() - 1);

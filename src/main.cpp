@@ -12,3 +12,16 @@ int main(int argc, char *argv[]) {
 
     return a.exec();
 }
+
+/*#include "../CLI/CLI.h"
+#include "../include/GameLoop.h"
+
+int main(int argc, char *argv[]) {
+
+
+    CLI cli;
+    GameLoop<CLI> gameLoop(cli);
+    gameLoop.run();
+
+    return 0;
+}*/
