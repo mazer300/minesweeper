@@ -83,6 +83,10 @@ void CLI::printField() {
     }
 }
 
+void CLI::showEndGameDialog(bool win) {
+    win ? std::cout<<"WIN!!!\n" : std::cout<<"Game Over!!!\n";
+}
+
 Command CLI::getCommand() {
     int command;
     while (true) {

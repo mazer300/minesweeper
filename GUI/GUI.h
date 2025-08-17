@@ -13,15 +13,22 @@
 #include <QResizeEvent>
 #include <QPropertyAnimation>
 #include <QSettings>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QSpacerItem>
+#include <string>
+#include <vector>
+#include <algorithm>
 #include "../include/GameLoop.h"
 #include "../include/Game.h"
-#include <string>
 
 class AnimatedButton : public QPushButton {
     Q_OBJECT
     Q_PROPERTY(float fillProgress READ fillProgress WRITE setFillProgress)
 public:
     explicit AnimatedButton(const QString &text, QWidget *parent = nullptr);
+    ~AnimatedButton() override;
     float fillProgress() const;
     void setFillProgress(float progress);
     void updateStyle(bool darkTheme);
@@ -34,7 +41,6 @@ protected:
 private:
     QPropertyAnimation *fillAnimation;
     float m_fillProgress;
-    QColor fillColor;
     bool isDarkTheme;
 };
 
@@ -52,13 +58,13 @@ public:
     std::tuple<int, int> getCoords() const;
     void getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_cols, unsigned int &number_of_mines);
     void setGame(Game *game);
+    void showEndGameDialog(bool win);
 
 signals:
     void difficultyChosen();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
-    void calculateButtonPositions();
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
@@ -67,11 +73,21 @@ private slots:
     void handleHard();
     void handleCustom();
     void toggleTheme();
+    void cellClicked(int row, int col);
+    void cellRightClicked(int row, int col);
+    void restartGame();
+    void exitToMenu();
 
 private:
     void updateTheme();
     void loadTheme();
     void saveTheme();
+    void createGameField();
+    void clearGameField();
+    void updateCell(int row, int col);
+    void updateMineCounter();
+    void calculateButtonPositions();
+    void resizeCells();
 
     Game *game;
     QWidget *centralWidget;
@@ -80,6 +96,7 @@ private:
     unsigned int *minesPtr;
     bool *choiceMadePtr;
     bool darkTheme;
+    bool gameEnded;
     QSettings *settings;
 
     AnimatedButton *easyButton;
@@ -87,6 +104,23 @@ private:
     AnimatedButton *hardButton;
     AnimatedButton *customButton;
     QPushButton *themeButton;
+
+    // Game field components
+    QGridLayout *gridLayout;
+    std::vector<std::vector<QPushButton*>> cellButtons;
+    QPushButton *restartButton;
+    QPushButton *exitButton;
+    QLabel *mineCounterLabel;
+
+    // Command handling
+    QEventLoop *commandLoop;
+    Command pendingCommand;
+    int lastRow;
+    int lastCol;
+
+    // End game dialog
+    QDialog *endGameDialog;
+    QLabel *gameResultLabel;
 
     const int BUTTON_SIZE = 300;
     const int BUTTON_SPACING = 40;

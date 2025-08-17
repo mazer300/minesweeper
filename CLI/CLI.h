@@ -15,6 +15,8 @@ public:
 
     void printField();
 
+    void showEndGameDialog(bool win);
+
     Command getCommand();
 
     std::tuple<int, int> getCoords() const;
