@@ -1,17 +1,28 @@
+
 #ifndef GUI_H
 #define GUI_H
 
 #include <QMainWindow>
+#include <QStackedWidget>
 #include <QPushButton>
 #include <QWidget>
 #include <QMessageBox>
+#include <QEventLoop>
+#include <QDialog>
+#include <QFormLayout>
+#include <QSpinBox>
+#include <QDialogButtonBox>
 #include <QResizeEvent>
 #include <QPropertyAnimation>
 #include <QSettings>
 #include <QGridLayout>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QSpacerItem>
+#include <QVBoxLayout>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "../include/GameLoop.h"
 #include "../include/Game.h"
 
@@ -24,6 +35,7 @@ public:
     float fillProgress() const;
     void setFillProgress(float progress);
     void updateStyle(bool darkTheme);
+    void setFixedSize(int width, int height);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -36,12 +48,76 @@ private:
     bool isDarkTheme;
 };
 
+class MainMenuWidget : public QWidget {
+    Q_OBJECT
+public:
+    explicit MainMenuWidget(QWidget *parent = nullptr, bool darkTheme = false);
+    void updateTheme(bool darkTheme);
+
+signals:
+    void difficultySelected(unsigned int rows, unsigned int cols, unsigned int mines);
+    void themeToggled();
+
+private slots:
+    void handleEasy();
+    void handleMedium();
+    void handleHard();
+    void handleCustom();
+
+private:
+    void resizeEvent(QResizeEvent *event) override;
+
+    AnimatedButton *easyButton;
+    AnimatedButton *mediumButton;
+    AnimatedButton *hardButton;
+    AnimatedButton *customButton;
+    QPushButton *themeButton;
+    bool darkTheme;
+
+    const int BUTTON_SIZE = 280;
+    const int BUTTON_SPACING = 30;
+};
+
+class GameWidget : public QWidget {
+    Q_OBJECT
+public:
+    explicit GameWidget(Game *game, bool darkTheme, QWidget *parent = nullptr);
+    ~GameWidget();
+
+    void setGame(Game* newGame);
+    void resetGameState();
+    void updateTheme(bool darkTheme);
+    void updateGameField();
+    void resizeCells();
+    void showEndGameDialog(bool win);
+
+    signals:
+        void cellClicked(int row, int col, Command command);
+    void restartRequested();
+    void exitToMenuRequested();
+
+private:
+    void createGameField();
+    void updateCell(int row, int col);
+    void updateMineCounter();
+
+    Game *game;
+    bool darkTheme;
+    bool gameEnded;
+
+    QGridLayout *gridLayout;
+    std::vector<std::vector<QPushButton*>> cellButtons;
+    AnimatedButton *restartButton;
+    AnimatedButton *exitButton;
+    QLabel *mineCounterLabel;
+    QDialog *endGameDialog;
+};
+
 class GUI : public QMainWindow {
     Q_OBJECT
 
 public:
     explicit GUI(QWidget *parent = nullptr);
-    GUI(QWidget *parent, Game *game);
     ~GUI() override;
 
     void print(std::string message);
@@ -56,67 +132,38 @@ signals:
     void difficultyChosen();
 
 protected:
-    void resizeEvent(QResizeEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
-    void handleEasy();
-    void handleMedium();
-    void handleHard();
-    void handleCustom();
     void toggleTheme();
-    void cellClicked(int row, int col);
-    void cellRightClicked(int row, int col);
-    void restartGame();
-    void exitToMenu();
+    void handleCellClicked(int row, int col, Command command);
+    void handleDifficultySelected(unsigned int rows, unsigned int cols, unsigned int mines);
+    void handleRestart();
+    void handleExitToMenu();
 
 private:
     void updateTheme();
     void loadTheme();
     void saveTheme();
-    void createGameField();
-    void clearGameField();
-    void updateCell(int row, int col);
-    void updateMineCounter();
-    void calculateButtonPositions();
-    void resizeCells();
     void showMainMenu();
+    void showGameScreen();
 
     Game *game;
     QWidget *centralWidget;
-    unsigned int *rowsPtr;
-    unsigned int *colsPtr;
-    unsigned int *minesPtr;
-    bool *choiceMadePtr;
+    QStackedWidget *stackedWidget;
+    unsigned int selectedRows;
+    unsigned int selectedCols;
+    unsigned int selectedMines;
     bool darkTheme;
-    bool gameEnded;
     QSettings *settings;
 
-    AnimatedButton *easyButton;
-    AnimatedButton *mediumButton;
-    AnimatedButton *hardButton;
-    AnimatedButton *customButton;
-    QPushButton *themeButton;
-
-    // Game field components
-    QGridLayout *gridLayout;
-    std::vector<std::vector<QPushButton*>> cellButtons;
-    AnimatedButton *restartButton;
-    AnimatedButton *exitButton;
-    QLabel *mineCounterLabel;
+    MainMenuWidget *mainMenuWidget;
+    GameWidget *gameWidget;
 
     // Command handling
     QEventLoop *commandLoop;
     Command pendingCommand;
     int lastRow;
     int lastCol;
-
-    // End game dialog
-    QDialog *endGameDialog;
-    QLabel *gameResultLabel;
-
-    const int BUTTON_SIZE = 300;
-    const int BUTTON_SPACING = 40;
-    const int MARGIN = 60;
 };
 #endif // GUI_H

@@ -1,17 +1,21 @@
+
 #include "GUI.h"
 #include <QInputDialog>
 #include <QEventLoop>
+#include <QScreen>
 #include <QApplication>
 #include <QFont>
 #include <QPainter>
 #include <QPainterPath>
+#include <QIcon>
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QLabel>
+#include <QMenu>
+#include <QAction>
 #include <QSizePolicy>
 #include <QSpacerItem>
-#include <QFormLayout>
-#include <QSpinBox>
 
 // Реализация AnimatedButton
 AnimatedButton::AnimatedButton(const QString &text, QWidget *parent)
@@ -57,32 +61,36 @@ void AnimatedButton::updateStyle(bool darkTheme) {
     setStyleSheet(style);
 }
 
+void AnimatedButton::setFixedSize(int width, int height) {
+    QPushButton::setFixedSize(width, height);
+}
+
 void AnimatedButton::paintEvent(QPaintEvent *event) {
     QPushButton::paintEvent(event);
 
     if (m_fillProgress > 0.0f) {
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
-
+        
         // Центр кнопки
         QPoint center = rect().center();
-
+        
         // Максимальный радиус (расстояние от центра до угла)
         double maxRadius = qSqrt(qPow(rect().width()/2.0, 2) + qPow(rect().height()/2.0, 2));
         double currentRadius = maxRadius * m_fillProgress;
-
+        
         // Создаем путь для круга, расширяющегося из центра
         QPainterPath clipPath;
         clipPath.addEllipse(center, currentRadius, currentRadius);
-
+        
         // Применяем маску
         painter.setClipPath(clipPath);
-
+        
         // Заливаем область внутри круга
         QPainterPath backgroundPath;
         backgroundPath.addRoundedRect(rect(), 15, 15);
         painter.fillPath(backgroundPath, QColor(255, 255, 255, isDarkTheme ? 60 : 120));
-
+        
         painter.setClipping(false);
     }
 
@@ -107,251 +115,113 @@ void AnimatedButton::leaveEvent(QEvent *event) {
     QPushButton::leaveEvent(event);
 }
 
-// Реализация GUI
-GUI::GUI(QWidget *parent) : QMainWindow(parent), game(nullptr),
-    easyButton(nullptr), mediumButton(nullptr), hardButton(nullptr),
-    customButton(nullptr), themeButton(nullptr), gridLayout(nullptr),
-    restartButton(nullptr), exitButton(nullptr), mineCounterLabel(nullptr),
-    commandLoop(nullptr), gameEnded(false), endGameDialog(nullptr),
-    gameResultLabel(nullptr) {
-
-    // Инициализация настроек
-    settings = new QSettings("Minesweeper", "ThemeSettings", this);
-
-    // Загрузка сохраненной темы
-    loadTheme();
-
-    centralWidget = new QWidget(this);
-    centralWidget->setMouseTracking(true);
-    setCentralWidget(centralWidget);
-    resize(1000, 800);
-
-    // Кнопка переключения темы
-    themeButton = new QPushButton(darkTheme ? "☀️" : "🌙", centralWidget);
-    themeButton->setFixedSize(50, 50);
-    connect(themeButton, &QPushButton::clicked, this, &GUI::toggleTheme);
-
-    // Применяем текущую тему
-    updateTheme();
+// Реализация MainMenuWidget
+MainMenuWidget::MainMenuWidget(QWidget *parent, bool darkTheme) 
+    : QWidget(parent), darkTheme(darkTheme) {
     
-    showMainMenu();
-}
-
-GUI::GUI(QWidget *parent, Game *game) : GUI(parent) {
-    this->game = game;
-}
-
-GUI::~GUI() {
-    // Сохраняем тему при закрытии
-    saveTheme();
-    clearGameField();
-    delete settings;
-}
-
-void GUI::loadTheme() {
-    // Загружаем сохраненную тему или используем светлую по умолчанию
-    darkTheme = settings->value("darkTheme", false).toBool();
-}
-
-void GUI::resizeEvent(QResizeEvent *event) {
-    QMainWindow::resizeEvent(event);
-
-    if (gridLayout) {
-        resizeCells();
-    } else {
-        calculateButtonPositions();
-    }
-
-    // Позиция кнопки темы
-    if (themeButton) {
-        themeButton->move(20, 20);
-    }
-}
-
-void GUI::closeEvent(QCloseEvent *event) {
-    saveTheme();
-    QMainWindow::closeEvent(event);
-}
-
-void GUI::saveTheme() {
-    // Сохраняем текущую тему
-    settings->setValue("darkTheme", darkTheme);
-}
-
-void GUI::calculateButtonPositions() {
-    if (!easyButton) return;
-
-    int totalWidth = 2 * BUTTON_SIZE + BUTTON_SPACING;
-    int totalHeight = 2 * BUTTON_SIZE + BUTTON_SPACING;
-
-    int startX = (width() - totalWidth) / 2;
-    int startY = (height() - totalHeight) / 2;
-
-    easyButton->move(startX, startY);
-    mediumButton->move(startX + BUTTON_SIZE + BUTTON_SPACING, startY);
-    hardButton->move(startX, startY + BUTTON_SIZE + BUTTON_SPACING);
-    customButton->move(startX + BUTTON_SIZE + BUTTON_SPACING, startY + BUTTON_SIZE + BUTTON_SPACING);
-}
-
-void GUI::toggleTheme() {
-    darkTheme = !darkTheme;
-    updateTheme();
-
-    // Обновляем иконку кнопки
-    themeButton->setText(darkTheme ? "☀️" : "🌙");
-
-    // Сохраняем выбор темы
-    saveTheme();
-}
-
-void GUI::updateTheme() {
-    // Устанавливаем цвет фона
-    centralWidget->setStyleSheet(QString("background-color: %1;").arg(darkTheme ? "#222" : "#f5f5f5"));
-
-    // Обновляем стиль кнопок
-    if (easyButton) easyButton->updateStyle(darkTheme);
-    if (mediumButton) mediumButton->updateStyle(darkTheme);
-    if (hardButton) hardButton->updateStyle(darkTheme);
-    if (customButton) customButton->updateStyle(darkTheme);
-    if (restartButton) restartButton->updateStyle(darkTheme);
-    if (exitButton) exitButton->updateStyle(darkTheme);
-
-    // Обновляем стиль кнопки темы
-    if (themeButton) {
-        themeButton->setStyleSheet(QString(R"(
-            QPushButton {
-                border: 2px solid %1;
-                border-radius: 25px;
-                font-size: 20px;
-                background-color: %2;
-                color: %3;
-            }
-            QPushButton:hover {
-                background-color: %4;
-            }
-        )").arg(darkTheme ? "#666" : "#555")
-          .arg(darkTheme ? "#333" : "#f0f0f0")
-          .arg(darkTheme ? "#eee" : "#333")
-          .arg(darkTheme ? "#444" : "#ddd"));
-    }
-
-    // Обновляем стиль игрового поля
-    if (gridLayout) {
-        printField();
-    }
-}
-
-void GUI::getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_cols, unsigned int &number_of_mines) {
-    rowsPtr = &number_of_rows;
-    colsPtr = &number_of_cols;
-    minesPtr = &number_of_mines;
-
-    if (easyButton) easyButton->deleteLater();
-    if (mediumButton) mediumButton->deleteLater();
-    if (hardButton) hardButton->deleteLater();
-    if (customButton) customButton->deleteLater();
-
-    easyButton = new AnimatedButton("ЛЁГКИЙ\n\n9×9 клеток\n10 мин", centralWidget);
-    mediumButton = new AnimatedButton("СРЕДНИЙ\n\n16×16 клеток\n40 мин", centralWidget);
-    hardButton = new AnimatedButton("ТЯЖЁЛЫЙ\n\n30×16 клеток\n99 мин", centralWidget);
-    customButton = new AnimatedButton("НАСТРОЙКИ\n\nВыбрать параметры", centralWidget);
-
-    // Обновляем стили согласно текущей теме
-    easyButton->updateStyle(darkTheme);
-    mediumButton->updateStyle(darkTheme);
-    hardButton->updateStyle(darkTheme);
-    customButton->updateStyle(darkTheme);
-
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(30, 30, 30, 30);
+    
+    // Top layout for theme button
+    QHBoxLayout *topLayout = new QHBoxLayout;
+    topLayout->setContentsMargins(0, 0, 0, 20);
+    topLayout->addStretch();
+    
+    themeButton = new QPushButton(darkTheme ? "☀️" : "🌙", this);
+    themeButton->setFixedSize(50, 50);
+    topLayout->addWidget(themeButton);
+    mainLayout->addLayout(topLayout);
+    
+    // Grid layout for difficulty buttons
+    QGridLayout *gridLayout = new QGridLayout;
+    gridLayout->setSpacing(BUTTON_SPACING);
+    gridLayout->setContentsMargins(0, 0, 0, 0);
+    
+    easyButton = new AnimatedButton("ЛЁГКИЙ\n\n9×9 клеток\n10 мин", this);
+    mediumButton = new AnimatedButton("СРЕДНИЙ\n\n16×16 клеток\n40 мин", this);
+    hardButton = new AnimatedButton("ТЯЖЁЛЫЙ\n\n30×16 клеток\n99 мин", this);
+    customButton = new AnimatedButton("НАСТРОЙКИ\n\nВыбрать параметры", this);
+    
+    // Set fixed size for buttons
+    easyButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
+    mediumButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
+    hardButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
+    customButton->setFixedSize(BUTTON_SIZE, BUTTON_SIZE);
+    
+    // Add buttons to grid
+    gridLayout->addWidget(easyButton, 0, 0, Qt::AlignCenter);
+    gridLayout->addWidget(mediumButton, 0, 1, Qt::AlignCenter);
+    gridLayout->addWidget(hardButton, 1, 0, Qt::AlignCenter);
+    gridLayout->addWidget(customButton, 1, 1, Qt::AlignCenter);
+    
+    mainLayout->addLayout(gridLayout);
+    mainLayout->addStretch();
+    
+    // Обновляем стили
+    updateTheme(darkTheme);
+    
     QFont font;
     font.setPointSize(16);
     font.setBold(true);
-
+    
     easyButton->setFont(font);
     mediumButton->setFont(font);
     hardButton->setFont(font);
     customButton->setFont(font);
-
-    connect(easyButton, &QPushButton::clicked, this, &GUI::handleEasy);
-    connect(mediumButton, &QPushButton::clicked, this, &GUI::handleMedium);
-    connect(hardButton, &QPushButton::clicked, this, &GUI::handleHard);
-    connect(customButton, &QPushButton::clicked, this, &GUI::handleCustom);
-
-    calculateButtonPositions();
-
-    easyButton->show();
-    mediumButton->show();
-    hardButton->show();
-    customButton->show();
-
-    QEventLoop loop;
-    bool choiceMade = false;
-    choiceMadePtr = &choiceMade;
-    connect(this, &GUI::difficultyChosen, &loop, &QEventLoop::quit);
-    loop.exec();
+    
+    connect(easyButton, &QPushButton::clicked, this, &MainMenuWidget::handleEasy);
+    connect(mediumButton, &QPushButton::clicked, this, &MainMenuWidget::handleMedium);
+    connect(hardButton, &QPushButton::clicked, this, &MainMenuWidget::handleHard);
+    connect(customButton, &QPushButton::clicked, this, &MainMenuWidget::handleCustom);
+    connect(themeButton, &QPushButton::clicked, this, [this]() { emit themeToggled(); });
+    
+    setLayout(mainLayout);
 }
 
-void GUI::print(std::string message) {
-    QMessageBox::information(this, "Сообщение", QString::fromStdString(message));
-}
-
-void GUI::printField() {
-    if (!game) return;
-
-    for (unsigned int i = 0; i < game->getRows(); i++) {
-        for (unsigned int j = 0; j < game->getCols(); j++) {
-            updateCell(i, j);
+void MainMenuWidget::updateTheme(bool darkTheme) {
+    this->darkTheme = darkTheme;
+    themeButton->setText(darkTheme ? "☀️" : "🌙");
+    
+    // Устанавливаем цвет фона
+    setStyleSheet(QString("background-color: %1;").arg(darkTheme ? "#222" : "#f5f5f5"));
+    
+    // Обновляем стиль кнопок
+    easyButton->updateStyle(darkTheme);
+    mediumButton->updateStyle(darkTheme);
+    hardButton->updateStyle(darkTheme);
+    customButton->updateStyle(darkTheme);
+    
+    // Обновляем стиль кнопки темы
+    themeButton->setStyleSheet(QString(R"(
+        QPushButton {
+            border: 2px solid %1;
+            border-radius: 25px;
+            font-size: 20px;
+            background-color: %2;
+            color: %3;
         }
-    }
-    updateMineCounter();
-
-    // При победе или поражении открываем все поле
-    if (gameEnded) {
-        for (unsigned int i = 0; i < game->getRows(); i++) {
-            for (unsigned int j = 0; j < game->getCols(); j++) {
-                game->getCell(i, j).setOpen(true);
-                updateCell(i, j);
-            }
+        QPushButton:hover {
+            background-color: %4;
         }
-    }
+    )").arg(darkTheme ? "#666" : "#555")
+      .arg(darkTheme ? "#333" : "#f0f0f0")
+      .arg(darkTheme ? "#eee" : "#333")
+      .arg(darkTheme ? "#444" : "#ddd"));
 }
 
-Command GUI::getCommand() {
-    QEventLoop loop;
-    commandLoop = &loop;
-    loop.exec();
-    commandLoop = nullptr;
-    return pendingCommand;
+void MainMenuWidget::handleEasy() {
+    emit difficultySelected(9, 9, 10);
 }
 
-std::tuple<int, int> GUI::getCoords() const {
-    return std::make_tuple(lastRow, lastCol);
+void MainMenuWidget::handleMedium() {
+    emit difficultySelected(16, 16, 40);
 }
 
-void GUI::handleEasy() {
-    *rowsPtr = 9;
-    *colsPtr = 9;
-    *minesPtr = 10;
-    *choiceMadePtr = true;
-    emit difficultyChosen();
+void MainMenuWidget::handleHard() {
+    emit difficultySelected(16, 30, 99);
 }
 
-void GUI::handleMedium() {
-    *rowsPtr = 16;
-    *colsPtr = 16;
-    *minesPtr = 40;
-    *choiceMadePtr = true;
-    emit difficultyChosen();
-}
-
-void GUI::handleHard() {
-    *rowsPtr = 16;
-    *colsPtr = 30;
-    *minesPtr = 99;
-    *choiceMadePtr = true;
-    emit difficultyChosen();
-}
-
-void GUI::handleCustom() {
+void MainMenuWidget::handleCustom() {
     QDialog dialog(this);
     dialog.setWindowTitle("Пользовательские настройки");
     dialog.setFixedSize(400, 300);
@@ -402,190 +272,144 @@ void GUI::handleCustom() {
     connect(&buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
 
     if (dialog.exec() == QDialog::Accepted) {
-        *colsPtr = widthSpin->value();
-        *rowsPtr = heightSpin->value();
-        *minesPtr = minesSpin->value();
-        *choiceMadePtr = true;
-        emit difficultyChosen();
+        emit difficultySelected(heightSpin->value(), widthSpin->value(), minesSpin->value());
     }
 }
 
-void GUI::setGame(Game *game) {
-    this->game = game;
-    createGameField();
+void MainMenuWidget::resizeEvent(QResizeEvent *event) {
+    QWidget::resizeEvent(event);
 }
 
-void GUI::showMainMenu() {
-    clearGameField();
-    // Удаляем старые кнопки если есть
-    if (easyButton) easyButton->deleteLater();
-    if (mediumButton) mediumButton->deleteLater();
-    if (hardButton) hardButton->deleteLater();
-    if (customButton) customButton->deleteLater();
-
-    // Создаем кнопки главного меню
-    easyButton = new AnimatedButton("ЛЁГКИЙ\n\n9×9 клеток\n10 мин", centralWidget);
-    mediumButton = new AnimatedButton("СРЕДНИЙ\n\n16×16 клеток\n40 мин", centralWidget);
-    hardButton = new AnimatedButton("ТЯЖЁЛЫЙ\n\n30×16 клеток\n99 мин", centralWidget);
-    customButton = new AnimatedButton("НАСТРОЙКИ\n\nВыбрать параметры", centralWidget);
-
-    // Обновляем стили
-    easyButton->updateStyle(darkTheme);
-    mediumButton->updateStyle(darkTheme);
-    hardButton->updateStyle(darkTheme);
-    customButton->updateStyle(darkTheme);
-
-    QFont font;
-    font.setPointSize(16);
-    font.setBold(true);
-
-    easyButton->setFont(font);
-    mediumButton->setFont(font);
-    hardButton->setFont(font);
-    customButton->setFont(font);
-
-    connect(easyButton, &QPushButton::clicked, this, &GUI::handleEasy);
-    connect(mediumButton, &QPushButton::clicked, this, &GUI::handleMedium);
-    connect(hardButton, &QPushButton::clicked, this, &GUI::handleHard);
-    connect(customButton, &QPushButton::clicked, this, &GUI::handleCustom);
-
-    calculateButtonPositions();
-
-    easyButton->show();
-    mediumButton->show();
-    hardButton->show();
-    customButton->show();
-}
-
-// Game field implementation
-void GUI::createGameField() {
-    clearGameField();
-
-    QWidget *gameWidget = new QWidget;
-    QVBoxLayout *mainLayout = new QVBoxLayout(gameWidget);
-    mainLayout->setAlignment(Qt::AlignCenter);
-
-    // Top panel with mine counter and buttons
+// Реализация GameWidget
+GameWidget::GameWidget(Game *game, bool darkTheme, QWidget *parent)
+    : QWidget(parent), game(game), darkTheme(darkTheme), gameEnded(false), endGameDialog(nullptr) {
+    
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(20, 20, 20, 20);
+    
+    // Top panel with mine counter
     QHBoxLayout *topLayout = new QHBoxLayout;
-    topLayout->setAlignment(Qt::AlignCenter);
-
     mineCounterLabel = new QLabel(QString("Мины: %1").arg((int)game->getMines()));
-    mineCounterLabel->setStyleSheet("font-size: 18px; font-weight: bold; padding: 10px;");
-    topLayout->addWidget(mineCounterLabel, 0, Qt::AlignCenter);
+    mineCounterLabel->setStyleSheet("font-size: 18px; font-weight: bold;");
+    topLayout->addWidget(mineCounterLabel, 0, Qt::AlignLeft);
     topLayout->addStretch();
-
     mainLayout->addLayout(topLayout);
 
-    // Центрированное игровое поле
-    QHBoxLayout *centerLayout = new QHBoxLayout;
-    centerLayout->setAlignment(Qt::AlignCenter);
-
     // Game field grid
+    QHBoxLayout *fieldLayout = new QHBoxLayout;
+    fieldLayout->setAlignment(Qt::AlignCenter);
+    
     gridLayout = new QGridLayout;
-    gridLayout->setSpacing(1);
-
+    gridLayout->setSpacing(2);
+    
     cellButtons.resize(game->getRows());
     for (unsigned int i = 0; i < game->getRows(); i++) {
         cellButtons[i].resize(game->getCols());
         for (unsigned int j = 0; j < game->getCols(); j++) {
             QPushButton *button = new QPushButton;
             button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-            button->setMinimumSize(20, 20);
+            button->setMinimumSize(30, 30);
             button->setProperty("row", static_cast<int>(i));
             button->setProperty("col", static_cast<int>(j));
-
-            // Enable right-click context menu
             button->setContextMenuPolicy(Qt::CustomContextMenu);
+            
             connect(button, &QPushButton::clicked, [this, button]() {
-                if (!gameEnded) { // Block clicks after game ends
-                    int row = button->property("row").toInt();
-                    int col = button->property("col").toInt();
-                    cellClicked(row, col);
+                int row = button->property("row").toInt();
+                int col = button->property("col").toInt();
+                if (!gameEnded) {
+                    emit cellClicked(row, col, Command::Attack);
                 }
             });
+            
             connect(button, &QPushButton::customContextMenuRequested, [this, button]() {
-                if (!gameEnded) { // Block clicks after game ends
-                    int row = button->property("row").toInt();
-                    int col = button->property("col").toInt();
-                    cellRightClicked(row, col);
+                int row = button->property("row").toInt();
+                int col = button->property("col").toInt();
+                if (!gameEnded) {
+                    emit cellClicked(row, col, Command::PutFlag);
                 }
             });
-
+            
             gridLayout->addWidget(button, i, j);
             cellButtons[i][j] = button;
         }
     }
+    
+    fieldLayout->addLayout(gridLayout);
+    mainLayout->addLayout(fieldLayout);
 
-    centerLayout->addLayout(gridLayout);
-    mainLayout->addLayout(centerLayout);
-
-    // Кнопки управления внизу
+    // Bottom panel with buttons
     QHBoxLayout *buttonLayout = new QHBoxLayout;
     buttonLayout->setAlignment(Qt::AlignCenter);
-
-    restartButton = new AnimatedButton("Рестарт", gameWidget);
-    exitButton = new AnimatedButton("Выход в меню", gameWidget);
-
-    // Стилизация как в главном меню
-    restartButton->updateStyle(darkTheme);
-    exitButton->updateStyle(darkTheme);
-    restartButton->setFixedSize(200, 80);
-    exitButton->setFixedSize(200, 80);
-
+    
+    restartButton = new AnimatedButton("Рестарт", this);
+    exitButton = new AnimatedButton("Выход в меню", this);
+    
+    restartButton->setFixedSize(180, 60);
+    exitButton->setFixedSize(180, 60);
+    
     QFont buttonFont;
     buttonFont.setPointSize(14);
     buttonFont.setBold(true);
     restartButton->setFont(buttonFont);
     exitButton->setFont(buttonFont);
-
+    
     buttonLayout->addWidget(restartButton);
     buttonLayout->addSpacing(20);
     buttonLayout->addWidget(exitButton);
-
+    
     mainLayout->addLayout(buttonLayout);
+    
+    connect(restartButton, &QPushButton::clicked, this, [this]() { emit restartRequested(); });
+    connect(exitButton, &QPushButton::clicked, this, [this]() { emit exitToMenuRequested(); });
+    
+    updateTheme(darkTheme);
+    updateGameField();
+}
 
-    setCentralWidget(gameWidget);
+GameWidget::~GameWidget() {
+    if (endGameDialog) {
+        endGameDialog->deleteLater();
+    }
+}
 
-    // Connect buttons
-    connect(restartButton, &QPushButton::clicked, this, &GUI::restartGame);
-    connect(exitButton, &QPushButton::clicked, this, &GUI::exitToMenu);
-
+void GameWidget::setGame(Game* newGame) {
+    game = newGame;
     gameEnded = false;
-    printField();
+    updateGameField();
     resizeCells();
 }
 
-void GUI::clearGameField() {
-    if (gridLayout) {
-        for (auto& row : cellButtons) {
-            for (auto button : row) {
-                if (button) {
-                    gridLayout->removeWidget(button);
-                    delete button;
-                }
-            }
-            row.clear();
-        }
-        cellButtons.clear();
-        delete gridLayout;
-        gridLayout = nullptr;
-    }
-
-    if (restartButton) {
-        restartButton->deleteLater();
-        restartButton = nullptr;
-    }
-    if (exitButton) {
-        exitButton->deleteLater();
-        exitButton = nullptr;
-    }
+void GameWidget::updateTheme(bool darkTheme) {
+    this->darkTheme = darkTheme;
+    
+    // Обновляем стиль кнопок
+    if (restartButton) restartButton->updateStyle(darkTheme);
+    if (exitButton) exitButton->updateStyle(darkTheme);
+    
+    // Обновляем стиль счетчика мин
     if (mineCounterLabel) {
-        mineCounterLabel->deleteLater();
-        mineCounterLabel = nullptr;
+        mineCounterLabel->setStyleSheet(
+            QString("font-size: 18px; font-weight: bold; color: %1;")
+            .arg(darkTheme ? "#eee" : "#333")
+        );
     }
+    
+    // Обновляем игровое поле
+    updateGameField();
 }
 
-void GUI::updateCell(int row, int col) {
+void GameWidget::updateGameField() {
+    if (!game) return;
+
+    for (unsigned int i = 0; i < game->getRows(); i++) {
+        for (unsigned int j = 0; j < game->getCols(); j++) {
+            updateCell(i, j);
+        }
+    }
+    updateMineCounter();
+}
+
+void GameWidget::updateCell(int row, int col) {
     if (!game || row >= cellButtons.size() || col >= cellButtons[0].size()) return;
 
     Cell& cell = game->getCell(row, col);
@@ -610,7 +434,7 @@ void GUI::updateCell(int row, int col) {
     };
 
     if (cell.isOpen()) {
-        if (cell.isFlag() && game->getState()!=StateGame::Lose) {
+        if (cell.isFlag() && game->getState() != StateGame::Lose) {
             text = "🚩";
             style += "background-color: #ffcc00;";
 
@@ -636,14 +460,14 @@ void GUI::updateCell(int row, int col) {
     button->setText(text);
 }
 
-void GUI::updateMineCounter() {
+void GameWidget::updateMineCounter() {
     if (mineCounterLabel && game) {
         mineCounterLabel->setText(QString("Мины: %1").arg((int)game->getMines()));
     }
 }
 
-void GUI::resizeCells() {
-    if (!game || !gridLayout) return;
+void GameWidget::resizeCells() {
+    if (!game || !gridLayout || cellButtons.empty()) return;
 
     // Рассчитываем доступное пространство
     int availableWidth = width() - 40;
@@ -666,56 +490,12 @@ void GUI::resizeCells() {
     }
 }
 
-void GUI::cellClicked(int row, int col) {
-    if (gameEnded) return;
-
-    lastRow = row;
-    lastCol = col;
-    pendingCommand = Command::Attack;
-
-    if (commandLoop) {
-        commandLoop->quit();
-    }
-}
-
-void GUI::cellRightClicked(int row, int col) {
-    if (gameEnded) return;
-
-    lastRow = row;
-    lastCol = col;
-    pendingCommand = Command::PutFlag;
-
-    if (commandLoop) {
-        commandLoop->quit();
-    }
-}
-
-void GUI::restartGame() {
-    pendingCommand = Command::Restart;
-
-    if (commandLoop) {
-        commandLoop->quit();
-    }
-}
-
-void GUI::exitToMenu() {
-    pendingCommand = Command::Exit;
-
-    // Очищаем игровое поле и показываем главное меню
-    showMainMenu();
-
-    if (commandLoop) {
-        commandLoop->quit();
-    }
-}
-
-void GUI::showEndGameDialog(bool win) {
+void GameWidget::showEndGameDialog(bool win) {
     gameEnded = true;
-    printField(); // Open all cells
+    updateGameField(); // Open all cells
 
     if (endGameDialog) {
         endGameDialog->deleteLater();
-        endGameDialog = nullptr;
     }
 
     endGameDialog = new QDialog(this);
@@ -724,7 +504,7 @@ void GUI::showEndGameDialog(bool win) {
 
     QVBoxLayout *layout = new QVBoxLayout(endGameDialog);
 
-    gameResultLabel = new QLabel(win ? "🎉 Вы победили! 🎉" : "💥 Вы проиграли! 💥");
+    QLabel *gameResultLabel = new QLabel(win ? "🎉 Вы победили! 🎉" : "💥 Вы проиграли! 💥");
     gameResultLabel->setAlignment(Qt::AlignCenter);
     gameResultLabel->setStyleSheet("font-size: 18px; font-weight: bold;");
     layout->addWidget(gameResultLabel);
@@ -734,12 +514,12 @@ void GUI::showEndGameDialog(bool win) {
 
     connect(restartBtn, &QPushButton::clicked, [this]() {
         endGameDialog->accept();
-        restartGame();
+        emit restartRequested();
     });
 
     connect(menuBtn, &QPushButton::clicked, [this]() {
         endGameDialog->accept();
-        exitToMenu();
+        emit exitToMenuRequested();
     });
 
     QHBoxLayout *btnLayout = new QHBoxLayout;
@@ -768,6 +548,186 @@ void GUI::showEndGameDialog(bool win) {
       .arg(darkTheme ? "#666" : "#aaa");
 
     endGameDialog->setStyleSheet(dialogStyle);
-
     endGameDialog->exec();
+}
+
+// Реализация GUI
+GUI::GUI(QWidget *parent) : QMainWindow(parent), game(nullptr),
+    commandLoop(nullptr), mainMenuWidget(nullptr), gameWidget(nullptr) {
+
+    // Инициализация настроек
+    settings = new QSettings("Minesweeper", "ThemeSettings", this);
+
+    // Загрузка сохраненной темы
+    loadTheme();
+
+    centralWidget = new QWidget(this);
+    QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    
+    stackedWidget = new QStackedWidget(centralWidget);
+    mainLayout->addWidget(stackedWidget);
+    
+    setCentralWidget(centralWidget);
+    resize(1000, 800);
+    
+    showMainMenu();
+}
+
+GUI::~GUI() {
+    // Сохраняем тему при закрытии
+    saveTheme();
+    delete settings;
+}
+
+void GUI::loadTheme() {
+    // Загружаем сохраненную тему или используем светлую по умолчанию
+    darkTheme = settings->value("darkTheme", false).toBool();
+}
+
+void GUI::saveTheme() {
+    // Сохраняем текущую тему
+    settings->setValue("darkTheme", darkTheme);
+}
+
+void GUI::closeEvent(QCloseEvent *event) {
+    saveTheme();
+    QMainWindow::closeEvent(event);
+}
+
+void GUI::showMainMenu() {
+    if (gameWidget) {
+        stackedWidget->removeWidget(gameWidget);
+        gameWidget->deleteLater();
+        gameWidget = nullptr;
+    }
+    
+    if (!mainMenuWidget) {
+        mainMenuWidget = new MainMenuWidget(stackedWidget, darkTheme);
+        stackedWidget->addWidget(mainMenuWidget);
+        connect(mainMenuWidget, &MainMenuWidget::difficultySelected, 
+                this, &GUI::handleDifficultySelected);
+        connect(mainMenuWidget, &MainMenuWidget::themeToggled, 
+                this, &GUI::toggleTheme);
+    }
+    
+    stackedWidget->setCurrentWidget(mainMenuWidget);
+}
+
+void GUI::showGameScreen() {
+    if (!gameWidget) {
+        gameWidget = new GameWidget(game, darkTheme, stackedWidget);
+        stackedWidget->addWidget(gameWidget);
+        connect(gameWidget, &GameWidget::cellClicked, 
+                this, &GUI::handleCellClicked);
+        connect(gameWidget, &GameWidget::restartRequested, 
+                this, &GUI::handleRestart);
+        connect(gameWidget, &GameWidget::exitToMenuRequested, 
+                this, &GUI::handleExitToMenu);
+    }
+    
+    stackedWidget->setCurrentWidget(gameWidget);
+    gameWidget->resizeCells();
+}
+
+void GUI::toggleTheme() {
+    darkTheme = !darkTheme;
+    updateTheme();
+    saveTheme();
+}
+
+void GUI::updateTheme() {
+    // Обновляем текущий экран
+    if (mainMenuWidget) {
+        mainMenuWidget->updateTheme(darkTheme);
+    }
+    if (gameWidget) {
+        gameWidget->updateTheme(darkTheme);
+    }
+}
+
+void GUI::getDifficulty(unsigned int &number_of_rows, unsigned int &number_of_cols, unsigned int &number_of_mines) {
+    selectedRows = number_of_rows;
+    selectedCols = number_of_cols;
+    selectedMines = number_of_mines;
+    
+    QEventLoop loop;
+    connect(this, &GUI::difficultyChosen, &loop, &QEventLoop::quit);
+    loop.exec();
+    
+    number_of_rows = selectedRows;
+    number_of_cols = selectedCols;
+    number_of_mines = selectedMines;
+}
+
+void GUI::print(std::string message) {
+    QMessageBox::information(this, "Сообщение", QString::fromStdString(message));
+}
+
+void GUI::printField() {
+    if (gameWidget) {
+        gameWidget->updateGameField();
+    }
+}
+
+Command GUI::getCommand() {
+    QEventLoop loop;
+    commandLoop = &loop;
+    loop.exec();
+    commandLoop = nullptr;
+    return pendingCommand;
+}
+
+std::tuple<int, int> GUI::getCoords() const {
+    return std::make_tuple(lastRow, lastCol);
+}
+
+void GUI::setGame(Game *game) {
+    this->game = game;
+    
+    if (gameWidget) {
+        gameWidget->setGame(game);
+    } else {
+        showGameScreen();
+    }
+}
+
+void GUI::showEndGameDialog(bool win) {
+    if (gameWidget) {
+        gameWidget->showEndGameDialog(win);
+    }
+}
+
+void GUI::handleDifficultySelected(unsigned int rows, unsigned int cols, unsigned int mines) {
+    selectedRows = rows;
+    selectedCols = cols;
+    selectedMines = mines;
+    emit difficultyChosen();
+}
+
+void GUI::handleCellClicked(int row, int col, Command command) {
+    lastRow = row;
+    lastCol = col;
+    pendingCommand = command;
+
+    if (commandLoop) {
+        commandLoop->quit();
+    }
+}
+
+void GUI::handleRestart() {
+    pendingCommand = Command::Restart;
+    
+    if (commandLoop) {
+        commandLoop->quit();
+    }
+}
+
+void GUI::handleExitToMenu() {
+    pendingCommand = Command::Exit;
+    showMainMenu();
+    
+    if (commandLoop) {
+        commandLoop->quit();
+    }
 }
