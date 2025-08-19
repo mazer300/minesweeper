@@ -36,6 +36,7 @@ private:
     unsigned int number_of_columns;
     unsigned int number_of_mines;
     Field field;
+    bool flag_save_attack;
 };
 
 

@@ -278,11 +278,11 @@ void MainMenuWidget::handleCustom() {
     QFormLayout form(&dialog);
 
     QSpinBox *widthSpin = new QSpinBox(&dialog);
-    widthSpin->setRange(2, 69);
+    widthSpin->setRange(2, 57);
     widthSpin->setValue(9);
 
     QSpinBox *heightSpin = new QSpinBox(&dialog);
-    heightSpin->setRange(2, 45);
+    heightSpin->setRange(2, 27);
     heightSpin->setValue(9);
 
     QSpinBox *minesSpin = new QSpinBox(&dialog);
@@ -297,8 +297,8 @@ void MainMenuWidget::handleCustom() {
         minesSpin->setMaximum(widthSpin->value() * value - 1);
     });
 
-    form.addRow("Ширина (колонки):", widthSpin);
-    form.addRow("Высота (строки):", heightSpin);
+    form.addRow("Ширина (колонки)(макс:57):", widthSpin);
+    form.addRow("Высота (строки)(макс:27):", heightSpin);
     form.addRow("Количество мин:", minesSpin);
 
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
