@@ -3,7 +3,7 @@
 #include <ctime>
 
 Field::Field(unsigned int const number_rows, unsigned int const number_columns,
-             unsigned int const number_mines) : number_of_rows(number_rows), number_of_columns(number_columns),
+             unsigned int const number_mines,unsigned int const first_attack_x,unsigned int const first_attack_y) : number_of_rows(number_rows), number_of_columns(number_columns),
                                                 number_of_mines(number_mines), state_of_game(true), count_flags(0) {
     // Создание поля
     for (size_t i = 0; i < number_of_rows; i++) {
@@ -21,7 +21,7 @@ Field::Field(unsigned int const number_rows, unsigned int const number_columns,
         unsigned int x = rand() % number_of_rows;
         unsigned int y = rand() % number_of_columns;
 
-        if (cells[x][y].isMine() == false) {
+        if (cells[x][y].isMine() == false && !(x==first_attack_x && y==first_attack_y)) {
             cells[x][y].setMine(true);
             counter_mines++;
         }

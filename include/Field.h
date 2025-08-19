@@ -7,7 +7,8 @@
 
 class Field {
 public:
-    Field(unsigned int number_rows, unsigned int number_columns, unsigned int number_mines);
+    Field(unsigned int number_rows, unsigned int number_columns, unsigned int number_mines, unsigned int first_attack_x,
+          unsigned int first_attack_y);
 
     void putFlag(unsigned int row, unsigned int col);
 
