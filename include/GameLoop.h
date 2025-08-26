@@ -2,6 +2,7 @@
 #define GAMELOOP_H
 
 #include "Game.h"
+#include <tuple>
 
 enum Command {
     Attack,
@@ -45,9 +46,8 @@ private:
             StateGame state = game.getState(); // Сохраняем состояние
 
             if (state == StateGame::Win || state == StateGame::Lose) {
-                //interface.print(state == StateGame::Win ? "WIN!!!\n" : "Game Over!\n");
-                interface.showEndGameDialog(state == StateGame::Win);
                 interface.printField();
+                interface.showEndGameDialog(state == StateGame::Win);
 
                 // Обработка выбора после окончания игры
                 switch (interface.getCommand()) {

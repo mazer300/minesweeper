@@ -1,8 +1,8 @@
 #include "CLI.h"
+#include <limits>
 #include <iostream>
 #ifdef _WIN32
 #include <windows.h>
-#include <limits>
 #else
 #include <cstdlib>
 #endif
@@ -85,6 +85,7 @@ void CLI::printField() {
 
 void CLI::showEndGameDialog(bool win) {
     win ? std::cout<<"WIN!!!\n" : std::cout<<"Game Over!!!\n";
+    std::cout<<"Введите 5 или 6 для действий\n";
 }
 
 Command CLI::getCommand() {
