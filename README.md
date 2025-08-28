@@ -27,6 +27,8 @@
    cmake ..
    # или
    cmake -DQT_PATH="/home/user/Qt/6.9.1/gcc_64" -DBUILD_GUI=ON ..  # Для linux (путь нужно указать свой)
+   # Для CLI 
+   cmake -DQT_PATH="/home/user/Qt/6.9.1/gcc_64" -DBUILD_GUI=OFF -DBUILD_CLI=ON ..
    make
 
 3. Запуск
